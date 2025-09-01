@@ -41,6 +41,8 @@ const interviewSchema = new mongoose.Schema({
     default: 'pending'
   },
   meetingLink: String,
+  googleMeetId: String,
+  meetingEndedAt: Date,
   notes: String,
   candidateBrief: String, // AI-generated brief about candidate
   slotExpiresAt: {
@@ -65,6 +67,10 @@ const interviewSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     }
+  },
+  feedbackVisible: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

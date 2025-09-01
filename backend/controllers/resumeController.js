@@ -1,5 +1,5 @@
 const Resume = require('../models/Resume');
-const nlpService = require('../services/nlpService');
+const enhancedNlpService = require('../services/enhancedNlpService');
 const similarityService = require('../services/similarityService');
 const logger = require('../utils/logger');
 
@@ -17,7 +17,7 @@ class ResumeController {
       }
 
       // Extract structured data using AI
-      const extractedData = await nlpService.extractResumeData(originalText);
+      const extractedData = await enhancedNlpService.extractResumeData(originalText);
 
       // Create resume record
       const resume = new Resume({

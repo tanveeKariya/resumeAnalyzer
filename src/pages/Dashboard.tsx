@@ -2,10 +2,12 @@ import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Upload, Target, Calendar, MessageSquare, TrendingUp, Users, Clock, CheckCircle,
-  BarChart3, FileText, Star, Award
+  BarChart3, FileText, Star, Award, Zap, Brain, Shield, Sparkles
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -105,121 +107,148 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">{getGreeting()}, {user?.name || 'Guest'}!</h1>
-        <p className="opacity-90">
+      <Card className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white shadow-2xl border-0">
+        <div className="p-8">
+          <div className="flex items-center space-x-4 mb-4">
+            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+              <Sparkles className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold mb-2">{getGreeting()}, {user?.name || 'Guest'}!</h1>
+              <p className="opacity-90 text-lg">
           {user?.role === 'hr'
-            ? 'Here\'s your recruitment dashboard overview.'
+                ? 'Manage your recruitment pipeline with AI-powered insights.'
             : user?.role === 'candidate'
-            ? 'Ready to discover your next career opportunity?'
-            : 'Welcome to CareerAI - your intelligent career assistant.'}
-        </p>
-      </div>
+                ? 'Discover your next career opportunity with AI assistance.'
+                : 'Welcome to CareerAI - your intelligent career assistant.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         {displayStats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
-                  <Icon className="h-6 w-6 text-white" />
+            <Card key={index} className="p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1" hover gradient>
+              <div className="flex items-center justify-between mb-6">
+                <div className={`w-14 h-14 ${stat.color.replace('bg-', 'bg-gradient-to-br from-').replace('-500', '-500 to-').replace('500', '600')} rounded-2xl flex items-center justify-center shadow-lg`}>
+                  <Icon className="h-7 w-7 text-white" />
                 </div>
-                <span className="text-2xl font-bold text-gray-900">{stat.value}</span>
+                <span className="text-3xl font-bold text-gray-900">{stat.value}</span>
               </div>
-              <p className="text-gray-600 font-medium mb-1">{stat.label}</p>
-              <p className="text-sm text-green-600">{stat.change}</p>
-            </div>
+              <p className="text-gray-700 font-semibold mb-2 text-lg">{stat.label}</p>
+              <p className="text-sm text-green-600 font-medium">{stat.change}</p>
+            </Card>
           );
         })}
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <Card className="p-8" gradient>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center space-x-2">
+          <Zap className="h-6 w-6 text-blue-600" />
+          <span>Quick Actions</span>
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
             return (
               <Link
                 key={index}
                 to={action.path}
-                className="flex items-center p-4 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all group"
+                className="flex items-center p-6 rounded-2xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-300 group shadow-sm hover:shadow-lg transform hover:-translate-y-1"
               >
-                <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center mr-3`}>
-                  <Icon className="h-5 w-5 text-white" />
+                <div className={`w-12 h-12 ${action.color.replace('bg-', 'bg-gradient-to-br from-').replace('-500', '-500 to-').replace('500', '600')} rounded-xl flex items-center justify-center mr-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                  <Icon className="h-6 w-6 text-white" />
                 </div>
-                <span className="font-medium text-gray-900 group-hover:text-primary-700">
+                <span className="font-semibold text-gray-900 group-hover:text-blue-700 text-lg">
                   {action.label}
                 </span>
               </Link>
             );
           })}
         </div>
-      </div>
+      </Card>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
+      <Card className="p-8" gradient>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center space-x-2">
+          <Brain className="h-6 w-6 text-purple-600" />
+          <span>Recent Activity</span>
+        </h2>
         <div className="space-y-4">
           {user?.role === 'hr' ? (
             <>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <Users className="h-5 w-5 text-primary-600" />
-                <div>
-                  <p className="font-medium text-gray-900">New candidate applications</p>
-                  <p className="text-sm text-gray-600">{stats.totalResumes || 0} resumes analyzed this week</p>
+              <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+                  <Users className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-sm text-gray-500 ml-auto">2h ago</span>
+                <div>
+                  <p className="font-semibold text-gray-900">New candidate applications</p>
+                  <p className="text-sm text-blue-700">{stats.totalResumes || 0} resumes analyzed this week</p>
+                </div>
+                <span className="text-sm text-blue-600 ml-auto font-medium">2h ago</span>
               </div>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <Calendar className="h-5 w-5 text-secondary-600" />
-                <div>
-                  <p className="font-medium text-gray-900">Interview completed</p>
-                  <p className="text-sm text-gray-600">{stats.completedInterviews || 0} interviews completed</p>
+              <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+                <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-sm text-gray-500 ml-auto">4h ago</span>
+                <div>
+                  <p className="font-semibold text-gray-900">Interview completed</p>
+                  <p className="text-sm text-purple-700">{stats.completedInterviews || 0} interviews completed</p>
+                </div>
+                <span className="text-sm text-purple-600 ml-auto font-medium">4h ago</span>
               </div>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <MessageSquare className="h-5 w-5 text-accent-600" />
-                <div>
-                  <p className="font-medium text-gray-900">Feedback analyzed</p>
-                  <p className="text-sm text-gray-600">{stats.totalFeedbacks || 0} feedback analyses completed</p>
+              <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-xl border border-emerald-200">
+                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
+                  <MessageSquare className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-sm text-gray-500 ml-auto">1d ago</span>
+                <div>
+                  <p className="font-semibold text-gray-900">Feedback analyzed</p>
+                  <p className="text-sm text-emerald-700">{stats.totalFeedbacks || 0} feedback analyses completed</p>
+                </div>
+                <span className="text-sm text-emerald-600 ml-auto font-medium">1d ago</span>
               </div>
             </>
           ) : (
             <>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <Target className="h-5 w-5 text-primary-600" />
-                <div>
-                  <p className="font-medium text-gray-900">New job matches found</p>
-                  <p className="text-sm text-gray-600">{stats.totalMatches || 0} positions match your profile</p>
+              <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+                  <Target className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-sm text-gray-500 ml-auto">1h ago</span>
+                <div>
+                  <p className="font-semibold text-gray-900">New job matches found</p>
+                  <p className="text-sm text-blue-700">{stats.totalMatches || 0} positions match your profile</p>
+                </div>
+                <span className="text-sm text-blue-600 ml-auto font-medium">1h ago</span>
               </div>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <Calendar className="h-5 w-5 text-secondary-600" />
-                <div>
-                  <p className="font-medium text-gray-900">Interview scheduled</p>
-                  <p className="text-sm text-gray-600">{stats.pendingInterviews || 0} interviews pending</p>
+              <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+                <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-sm text-gray-500 ml-auto">3h ago</span>
+                <div>
+                  <p className="font-semibold text-gray-900">Interview scheduled</p>
+                  <p className="text-sm text-purple-700">{stats.pendingInterviews || 0} interviews pending</p>
+                </div>
+                <span className="text-sm text-purple-600 ml-auto font-medium">3h ago</span>
               </div>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <Upload className="h-5 w-5 text-accent-600" />
-                <div>
-                  <p className="font-medium text-gray-900">Resume processed</p>
-                  <p className="text-sm text-gray-600">Latest resume analysis completed</p>
+              <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-xl border border-emerald-200">
+                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
+                  <Upload className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-sm text-gray-500 ml-auto">1d ago</span>
+                <div>
+                  <p className="font-semibold text-gray-900">Resume processed</p>
+                  <p className="text-sm text-emerald-700">Latest resume analysis completed</p>
+                </div>
+                <span className="text-sm text-emerald-600 ml-auto font-medium">1d ago</span>
               </div>
             </>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

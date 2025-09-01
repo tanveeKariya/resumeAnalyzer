@@ -2,7 +2,8 @@ const Interview = require('../models/Interview');
 const Job = require('../models/Job');
 const Resume = require('../models/Resume');
 const User = require('../models/User');
-const nlpService = require('../services/nlpService');
+const enhancedNlpService = require('../services/enhancedNlpService');
+const googleMeetService = require('../services/googleMeetService');
 const logger = require('../utils/logger');
 
 class InterviewController {
@@ -51,7 +52,15 @@ class InterviewController {
       }
 
       // Generate candidate brief
-      const candidateBrief = await nlpService.generateCandidateBrief(resume.extractedData);
+      const candidateBrief = await enhancedNlpService.generateCandidateBrief(resume.extractedData);
+
+      // Generate Google Meet link
+      const meetingResult = await googleMeetService.createMeetingLink(
+        `Interview: ${job.title} - ${candidate.name}`,
+        scheduledDateTime,
+        duration || 60,
+        [candidate.email, req.user.email]
+      );
 
       // Set slot expiration (24 hours from now)
       const slotExpiresAt = new Date();
@@ -65,7 +74,8 @@ class InterviewController {
         scheduledDateTime: new Date(scheduledDateTime),
         duration: duration || 60,
         type: type || 'technical',
-        meetingLink,
+        meetingLink: meetingResult.meetLink,
+        googleMeetId: meetingResult.eventId,
         notes,
         candidateBrief,
         slotExpiresAt
@@ -239,6 +249,50 @@ class InterviewController {
     }
   }
 
+  async endMeeting(req, res) {
+    try {
+      const { interviewId } = req.params;
+      const userId = req.user.id;
+
+      const interview = await Interview.findOne({
+        _id: interviewId,
+        recruiterId: userId
+      });
+
+      if (!interview) {
+        return res.status(404).json({
+          success: false,
+          message: 'Interview not found or unauthorized'
+        });
+      }
+
+      // End Google Meet
+      if (interview.googleMeetId) {
+        await googleMeetService.endMeeting(interview.googleMeetId);
+      }
+
+      // Update interview status
+      interview.status = 'completed';
+      interview.meetingEndedAt = new Date();
+      await interview.save();
+
+      logger.info(`Meeting ended for interview ${interviewId}`);
+
+      res.json({
+        success: true,
+        message: 'Meeting ended successfully',
+        data: { requiresFeedback: true }
+      });
+
+    } catch (error) {
+      logger.error('Failed to end meeting:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to end meeting'
+      });
+    }
+  }
+
   async submitFeedback(req, res) {
     try {
       const { interviewId } = req.params;
@@ -268,6 +322,8 @@ class InterviewController {
         submittedBy: userId
       };
 
+      // Store feedback for future reference
+      interview.feedbackVisible = false; // Hidden from candidate
       await interview.save();
 
       logger.info(`Feedback submitted for interview ${interviewId}`);
@@ -283,6 +339,43 @@ class InterviewController {
       res.status(500).json({
         success: false,
         message: 'Failed to submit feedback'
+      });
+    }
+  }
+
+  async getCandidateFeedbackHistory(req, res) {
+    try {
+      const { candidateId } = req.params;
+      const userId = req.user.id;
+
+      // Only HR can view candidate feedback history
+      if (req.user.role !== 'hr') {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied'
+        });
+      }
+
+      const feedbackHistory = await Interview.find({
+        candidateId,
+        status: 'completed',
+        'feedback.submittedAt': { $exists: true }
+      })
+      .populate('jobId', 'title company')
+      .populate('recruiterId', 'name email')
+      .select('jobId recruiterId feedback createdAt')
+      .sort({ createdAt: -1 });
+
+      res.json({
+        success: true,
+        data: feedbackHistory
+      });
+
+    } catch (error) {
+      logger.error('Failed to get candidate feedback history:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to retrieve feedback history'
       });
     }
   }

@@ -1,15 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  Brain, 
-  Home, 
-  Upload, 
-  Target, 
-  Calendar, 
-  MessageSquare, 
-  Users,
-  BarChart3,
-  Settings 
+  Brain, Home, Upload, Target, Calendar, MessageSquare, Users, BarChart3, Settings, Sparkles
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -35,15 +27,17 @@ export default function Sidebar() {
   const navItems = user?.role === 'hr' ? hrNavItems : candidateNavItems;
 
   return (
-    <div className="w-64 bg-white shadow-lg border-r border-gray-200">
+    <div className="w-72 bg-gradient-to-b from-white to-gray-50/50 shadow-2xl border-r border-gray-100/50 backdrop-blur-sm">
       <div className="p-6">
         <Link to="/" className="flex items-center space-x-2">
-          <Brain className="h-8 w-8 text-primary-600" />
-          <span className="text-xl font-bold text-gray-900">CareerAI</span>
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+            <Brain className="h-6 w-6 text-white" />
+          </div>
+          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">CareerAI</span>
         </Link>
       </div>
 
-      <nav className="mt-6">
+      <nav className="mt-8">
         <div className="px-6 mb-4">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
             Navigation
@@ -56,23 +50,31 @@ export default function Sidebar() {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center px-6 py-3 text-sm font-medium transition-colors ${
+              className={`flex items-center mx-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
                 isActive(item.path)
-                  ? 'bg-primary-50 text-primary-700 border-r-2 border-primary-700'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/60 hover:shadow-md'
               }`}
             >
-              <Icon className="mr-3 h-5 w-5" />
+              <Icon className={`mr-3 h-5 w-5 ${isActive(item.path) ? 'text-white' : ''}`} />
               {item.label}
             </Link>
           );
         })}
       </nav>
 
-      <div className="absolute bottom-0 w-64 p-6">
-        <div className="bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg p-4 text-white text-sm">
-          <p className="font-semibold">Welcome, {user?.name}!</p>
-          <p className="opacity-90">{user?.role === 'hr' ? 'HR Account' : 'Candidate Account'}</p>
+      <div className="absolute bottom-0 w-72 p-6">
+        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl p-6 text-white shadow-xl">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <Sparkles className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-lg">Welcome!</p>
+              <p className="text-sm opacity-90">{user?.name}</p>
+            </div>
+          </div>
+          <p className="text-sm opacity-90 capitalize">{user?.role === 'hr' ? 'HR Dashboard' : 'Candidate Portal'}</p>
         </div>
       </div>
     </div>

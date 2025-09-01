@@ -14,7 +14,9 @@ router.get('/', interviewController.getUserInterviews);
 router.get('/:interviewId', interviewController.getInterviewDetails);
 router.patch('/:interviewId/respond', roleAuth(['candidate']), interviewController.respondToInterview);
 router.patch('/:interviewId/status', interviewController.updateInterviewStatus);
+router.post('/:interviewId/end-meeting', roleAuth(['hr']), interviewController.endMeeting);
 router.post('/:interviewId/feedback', roleAuth(['hr']), interviewController.submitFeedback);
+router.get('/candidate/:candidateId/feedback-history', roleAuth(['hr']), interviewController.getCandidateFeedbackHistory);
 router.get('/jobs/:jobId/slots', interviewController.getAvailableSlots);
 
 module.exports = router;

@@ -12,6 +12,7 @@
   "dependencies": {
     "@headlessui/react": "^1.7.18",
     "@types/file-saver": "^2.0.7",
+    "@types/node": "^24.3.0",
     "axios": "^1.11.0",
     "date-fns": "^3.3.1",
     "docx-preview": "^0.3.6",

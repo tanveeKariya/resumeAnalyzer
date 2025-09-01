@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { Target, Calendar, TrendingUp, RefreshCw, Download, CheckCircle, MapPin, DollarSign } from 'lucide-react';
+import { Target, Calendar, TrendingUp, RefreshCw, Download, CheckCircle, MapPin, DollarSign, Clock, Award, Zap } from 'lucide-react';
 import { JobService, ResumeAnalysisService, JobMatchingService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import TestModal from '../components/TestModal';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
 interface JobMatch {
   _id: string;
@@ -43,6 +46,8 @@ export default function JobMatches() {
   const [loading, setLoading] = useState(false);
   const [analyzed, setAnalyzed] = useState(false);
   const [error, setError] = useState('');
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [selectedJobForTest, setSelectedJobForTest] = useState<JobMatch | null>(null);
 
   React.useEffect(() => {
     loadJobs();
@@ -67,26 +72,45 @@ export default function JobMatches() {
   const handleApplyToJob = async (job: JobMatch) => {
     try {
       setLoading(true);
-      const resumeAnalyses = await ResumeAnalysisService.getUserResumes();
-      
-      if (!resumeAnalyses.success || resumeAnalyses.data.length === 0) {
-        setError('Please upload and analyze a resume first');
-        return;
-      }
-
-      const latestResume = resumeAnalyses.data[resumeAnalyses.data.length - 1];
-      const response = await JobMatchingService.applyToJob(job._id, latestResume._id);
-      
-      if (response.success) {
-        alert(`Successfully applied to ${job.title} at ${job.company}!`);
-      }
+      // Show test modal instead of direct application
+      setSelectedJobForTest(job);
+      setShowTestModal(true);
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to apply to job');
+      setError(error.response?.data?.message || 'Failed to initiate application');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleTestComplete = async (score: number, passed: boolean) => {
+    if (passed && selectedJobForTest) {
+      try {
+        const resumeAnalyses = await ResumeAnalysisService.getUserResumes();
+        
+        if (!resumeAnalyses.success || resumeAnalyses.data.length === 0) {
+          setError('Please upload and analyze a resume first');
+          return;
+        }
+
+        const latestResume = resumeAnalyses.data[resumeAnalyses.data.length - 1];
+        const response = await JobMatchingService.applyToJob(selectedJobForTest._id, latestResume._id);
+        
+        if (response.success) {
+          setError('');
+          // Show success message in a better way
+          setTimeout(() => {
+            alert(`Congratulations! You passed the test with ${score}% and your application has been forwarded to the recruiter.`);
+          }, 500);
+        }
+      } catch (error: any) {
+        setError(error.response?.data?.message || 'Failed to submit application');
+      }
+    } else {
+      setError(`Test score: ${score}%. Minimum 95% required to proceed with application.`);
+    }
+    setShowTestModal(false);
+    setSelectedJobForTest(null);
+  };
   const handleScheduleInterview = (job: JobMatch) => {
     alert(`Interview scheduling for ${job.title} at ${job.company} - Feature will open scheduling modal`);
   };
@@ -120,87 +144,104 @@ export default function JobMatches() {
 
   return (
     <div className="space-y-6">
+      <TestModal
+        isOpen={showTestModal}
+        onClose={() => {
+          setShowTestModal(false);
+          setSelectedJobForTest(null);
+        }}
+        jobTitle={selectedJobForTest?.title || ''}
+        jobId={selectedJobForTest?._id || ''}
+        onTestComplete={handleTestComplete}
+      />
+
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Job Opportunities</h1>
-        <p className="text-gray-600">Discover job opportunities that match your profile</p>
+        <h1 className="text-4xl font-bold text-gray-900 mb-3 flex items-center space-x-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
+            <Target className="h-6 w-6 text-white" />
+          </div>
+          <span>Job Opportunities</span>
+        </h1>
+        <p className="text-gray-600 text-lg">Discover positions that match your profile and take the assessment to apply</p>
       </div>
 
       {/* Match Summary */}
-      <div className="bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl p-6 text-white">
+      <Card className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white shadow-2xl border-0">
+        <div className="p-8">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold mb-2">Available Positions</h2>
-            <p className="opacity-90">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                <Award className="h-6 w-6 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold">Available Positions</h2>
+            </div>
+            <p className="opacity-90 text-lg">
               {analyzed 
-                ? `We found ${jobMatches.length} positions available for application`
+                ? `We found ${jobMatches.length} positions that match your profile`
                 : 'Loading available job positions...'
               }
             </p>
             {error && (
-              <div className="mt-3 p-3 bg-red-500 bg-opacity-20 rounded-lg">
-                <p className="text-sm">{error}</p>
+              <div className="mt-4 p-4 bg-red-500 bg-opacity-20 rounded-xl border border-red-300">
+                <p className="text-sm font-medium">{error}</p>
               </div>
             )}
           </div>
           <div className="text-right">
             {analyzed && jobMatches.length > 0 && (
               <>
-                <div className="text-3xl font-bold">{jobMatches.length}</div>
-                <div className="text-sm opacity-90">Open Positions</div>
-                <button
+                <div className="text-4xl font-bold mb-1">{jobMatches.length}</div>
+                <div className="text-sm opacity-90 mb-4">Open Positions</div>
+                <Button
+                  variant="outline"
                   onClick={handleDownloadMatches}
-                  className="mt-2 bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition-colors flex items-center space-x-2"
+                  className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                  icon={Download}
                 >
-                  <Download className="h-4 w-4" />
-                  <span>Export</span>
-                </button>
+                  Export
+                </Button>
               </>
             )}
             {!analyzed && (
-              <button
+              <Button
                 onClick={loadJobs}
                 disabled={loading}
-                className="bg-white text-primary-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                loading={loading}
+                className="bg-white text-blue-600 hover:bg-gray-50"
+                icon={loading ? RefreshCw : Target}
               >
-                {loading ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    <span>Loading...</span>
-                  </>
-                ) : (
-                  <>
-                    <Target className="h-4 w-4" />
-                    <span>Load Jobs</span>
-                  </>
-                )}
-              </button>
+                {loading ? 'Loading...' : 'Load Jobs'}
+              </Button>
             )}
           </div>
         </div>
-      </div>
+        </div>
+      </Card>
 
       {/* Job Cards */}
       {analyzed && jobMatches.length > 0 ? (
-        <div className="grid gap-6">
+        <div className="grid gap-8">
           {jobMatches.map((job) => (
-            <div 
+            <Card
               key={job._id}
-              className={`bg-white rounded-xl shadow-sm border transition-all cursor-pointer ${
-                selectedJob === job._id ? 'border-primary-300 shadow-md' : 'border-gray-200 hover:shadow-md'
+              className={`transition-all cursor-pointer transform hover:-translate-y-1 ${
+                selectedJob === job._id ? 'border-blue-300 shadow-xl ring-2 ring-blue-100' : 'hover:shadow-xl'
               }`}
+              hover
               onClick={() => setSelectedJob(selectedJob === job._id ? null : job._id)}
             >
-              <div className="p-6">
+              <div className="p-8">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-xl font-semibold text-gray-900">{job.title}</h3>
-                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getMatchColor(job.matchScore || 75)}`}>
+                      <h3 className="text-2xl font-bold text-gray-900">{job.title}</h3>
+                      <span className={`px-4 py-2 rounded-full text-sm font-bold shadow-lg ${getMatchColor(job.matchScore || 75)}`}>
                         {job.matchScore || 75}% Match
                       </span>
                     </div>
-                    <div className="flex items-center space-x-4 text-gray-600 mb-2">
-                      <span className="font-medium">{job.company}</span>
+                    <div className="flex items-center space-x-4 text-gray-600 mb-3">
+                      <span className="font-semibold text-lg">{job.company}</span>
                       <span>•</span>
                       <div className="flex items-center space-x-1">
                         <MapPin className="h-4 w-4" />
@@ -209,29 +250,36 @@ export default function JobMatches() {
                       <span>•</span>
                       <span className="capitalize">{job.type}</span>
                     </div>
-                    <div className="flex items-center space-x-1 text-green-600 font-semibold">
+                    <div className="flex items-center space-x-1 text-green-600 font-bold text-lg">
                       <DollarSign className="h-4 w-4" />
                       <span>{formatSalary(job.salary)}</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <TrendingUp className={`h-8 w-8 mb-2 ${(job.matchScore || 75) >= 90 ? 'text-success-500' : 'text-primary-500'}`} />
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
+                      (job.matchScore || 75) >= 90 ? 'bg-green-100' : 'bg-blue-100'
+                    }`}>
+                      <TrendingUp className={`h-8 w-8 ${(job.matchScore || 75) >= 90 ? 'text-green-600' : 'text-blue-600'}`} />
+                    </div>
                   </div>
                 </div>
 
                 {/* Job Description */}
-                <div className="mb-4">
-                  <p className="text-gray-700 text-sm line-clamp-3">{job.description}</p>
+                <div className="mb-6">
+                  <p className="text-gray-700 leading-relaxed line-clamp-3">{job.description}</p>
                 </div>
 
                 {/* Required Skills */}
-                <div className="mb-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">Required Skills</h4>
+                <div className="mb-6">
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center space-x-2">
+                    <Zap className="h-4 w-4 text-blue-600" />
+                    <span>Required Skills</span>
+                  </h4>
                   <div className="flex flex-wrap gap-2">
                     {job.requirements.skills.map((skill, index) => (
                       <span 
                         key={index}
-                        className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm"
+                        className="px-3 py-1.5 bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 rounded-full text-sm font-medium border border-blue-200"
                       >
                         {skill}
                       </span>
@@ -240,41 +288,54 @@ export default function JobMatches() {
                 </div>
 
                 {/* Experience Requirements */}
-                <div className="mb-4 text-sm text-gray-600">
-                  <span className="font-medium">Experience:</span> {job.requirements.experience.min}-{job.requirements.experience.max} years ({job.requirements.experience.level} level)
+                <div className="mb-6 flex items-center space-x-2 text-gray-600">
+                  <Clock className="h-4 w-4" />
+                  <span className="font-semibold">Experience:</span> 
+                  <span>{job.requirements.experience.min}-{job.requirements.experience.max} years ({job.requirements.experience.level} level)</span>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex space-x-3">
-                  <button 
+                <div className="flex space-x-4">
+                  <Button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleApplyToJob(job);
                     }}
                     disabled={loading}
-                    className="flex-1 bg-secondary-600 text-white py-2 px-4 rounded-lg hover:bg-secondary-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
+                    variant="secondary"
+                    className="flex-1"
+                    icon={CheckCircle}
                   >
-                    <CheckCircle className="h-4 w-4" />
-                    <span>Apply Now</span>
-                  </button>
-                  <button 
+                    Take Test & Apply
+                  </Button>
+                  <Button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleScheduleInterview(job);
                     }}
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
+                    variant="outline"
+                    icon={Calendar}
                   >
-                    <Calendar className="h-4 w-4" />
-                    <span>View Details</span>
-                  </button>
+                    View Details
+                  </Button>
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       ) : analyzed && jobMatches.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No job opportunities found. Please check back later.</p>
+        <Card className="text-center py-16">
+          <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Target className="h-10 w-10 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No Opportunities Found</h3>
+          <p className="text-gray-500">No job opportunities found. Please check back later or update your profile.</p>
+        </Card>
+      ) : null}
+    </div>
+  );
+}
+
         </div>
       ) : null}
     </div>

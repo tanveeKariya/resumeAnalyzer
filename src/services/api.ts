@@ -339,6 +339,31 @@ export class JobService {
 }
 
 // =====================
+// Test Service
+// =====================
+export class TestService {
+  static async generateTest(jobId: string): Promise<{ success: boolean; data: any }> {
+    const response = await api.post(`/tests/jobs/${jobId}/generate`);
+    return response.data;
+  }
+
+  static async submitTest(testId: string, answers: number[]): Promise<{ success: boolean; data: any }> {
+    const response = await api.post(`/tests/${testId}/submit`, { answers });
+    return response.data;
+  }
+
+  static async getTestResults(testId: string): Promise<{ success: boolean; data: any }> {
+    const response = await api.get(`/tests/${testId}/results`);
+    return response.data;
+  }
+
+  static async getCandidateTests(): Promise<{ success: boolean; data: any[] }> {
+    const response = await api.get('/tests/my-tests');
+    return response.data;
+  }
+}
+
+// =====================
 // Interview Service
 // =====================
 export class InterviewService {
@@ -387,6 +412,16 @@ export class InterviewService {
     recommendation: string;
   }): Promise<{ success: boolean; data: any }> {
     const response = await api.post(`/interviews/${interviewId}/feedback`, feedbackData);
+    return response.data;
+  }
+
+  static async endMeeting(interviewId: string): Promise<{ success: boolean; data: any }> {
+    const response = await api.post(`/interviews/${interviewId}/end-meeting`);
+    return response.data;
+  }
+
+  static async getCandidateFeedbackHistory(candidateId: string): Promise<{ success: boolean; data: any[] }> {
+    const response = await api.get(`/interviews/candidate/${candidateId}/feedback-history`);
     return response.data;
   }
 

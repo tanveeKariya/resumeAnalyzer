@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
-import { Calendar, Users, Clock, CheckCircle, Plus, Filter, Eye, MessageSquare } from 'lucide-react';
+import { Calendar, Users, Clock, CheckCircle, Plus, Filter, Eye, MessageSquare, Video, Award, Brain, Zap } from 'lucide-react';
 import { JobService, InterviewService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import FeedbackModal from '../components/FeedbackModal';
+import { GoogleMeetService } from '../services/googleMeetService';
 
 interface JobWithApplicants {
   _id: string;
@@ -37,6 +41,9 @@ export default function HRDashboard() {
   const [showCreateJob, setShowCreateJob] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [selectedInterview, setSelectedInterview] = useState<any>(null);
+  const [candidateFeedbackHistory, setCandidateFeedbackHistory] = useState<any[]>([]);
 
   const [newJob, setNewJob] = useState({
     title: '',
@@ -180,6 +187,15 @@ export default function HRDashboard() {
 
     try {
       setLoading(true);
+      
+      // Create Google Meet link
+      const meetingLink = await GoogleMeetService.createMeetingLink(
+        `Interview: ${jobs.find(j => j._id === selectedJob)?.title} - ${selectedCandidate.userId.name}`,
+        newInterview.scheduledDateTime,
+        newInterview.duration,
+        [selectedCandidate.userId.email, user?.email || '']
+      );
+      
       const interviewData = {
         jobId: selectedJob,
         candidateId: selectedCandidate.userId._id,
@@ -187,7 +203,7 @@ export default function HRDashboard() {
         scheduledDateTime: newInterview.scheduledDateTime,
         duration: newInterview.duration,
         type: newInterview.type,
-        meetingLink: newInterview.meetingLink,
+        meetingLink,
         notes: newInterview.notes
       };
 
@@ -212,6 +228,45 @@ export default function HRDashboard() {
     }
   };
 
+  const endMeeting = async (interviewId: string) => {
+    try {
+      const response = await InterviewService.endMeeting(interviewId);
+      if (response.success) {
+        const interview = interviews.find(i => i._id === interviewId);
+        setSelectedInterview(interview);
+        setShowFeedbackModal(true);
+        await loadInterviews();
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Failed to end meeting');
+    }
+  };
+
+  const submitFeedback = async (feedbackData: any) => {
+    if (!selectedInterview) return;
+    
+    try {
+      const response = await InterviewService.submitFeedback(selectedInterview._id, feedbackData);
+      if (response.success) {
+        await loadInterviews();
+        alert('Feedback submitted successfully!');
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Failed to submit feedback');
+    }
+  };
+
+  const loadCandidateFeedbackHistory = async (candidateId: string) => {
+    try {
+      const response = await InterviewService.getCandidateFeedbackHistory(candidateId);
+      if (response.success) {
+        setCandidateFeedbackHistory(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load feedback history:', error);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed': return 'bg-success-100 text-success-800';
@@ -222,36 +277,54 @@ export default function HRDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => {
+          setShowFeedbackModal(false);
+          setSelectedInterview(null);
+        }}
+        candidateName={selectedInterview?.candidateId?.name || ''}
+        jobTitle={selectedInterview?.jobId?.title || ''}
+        onSubmit={submitFeedback}
+      />
+
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">HR Dashboard</h1>
-          <p className="text-gray-600">Manage job postings, candidates, and interviews</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-3 flex items-center space-x-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
+              <Brain className="h-6 w-6 text-white" />
+            </div>
+            <span>HR Dashboard</span>
+          </h1>
+          <p className="text-gray-600 text-lg">Manage job postings, candidates, and interviews with AI assistance</p>
         </div>
         <div className="flex space-x-3">
-          <button 
+          <Button
             onClick={() => setShowCreateJob(true)}
-            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
+            icon={Plus}
           >
-            <Plus className="h-4 w-4" />
-            <span>Post Job</span>
-          </button>
+            Post Job
+          </Button>
         </div>
       </div>
 
       {/* Create Job Modal */}
       {showCreateJob && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Post New Job</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <Card className="p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center space-x-2">
+              <Plus className="h-6 w-6 text-blue-600" />
+              <span>Post New Job</span>
+            </h3>
             
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-6">
               <input
                 type="text"
                 placeholder="Job Title *"
                 value={newJob.title}
                 onChange={(e) => setNewJob({...newJob, title: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
               
               <input
@@ -327,43 +400,51 @@ export default function HRDashboard() {
                 placeholder="Job Description *"
                 value={newJob.description}
                 onChange={(e) => setNewJob({...newJob, description: e.target.value})}
-                className="md:col-span-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="md:col-span-2 w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 rows={4}
               />
             </div>
             
-            <div className="flex space-x-3 mt-6">
-              <button
+            <div className="flex space-x-4 mt-8">
+              <Button
                 onClick={createJob}
                 disabled={loading}
-                className="flex-1 bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+                loading={loading}
+                className="flex-1"
               >
                 {loading ? 'Creating...' : 'Post Job'}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => setShowCreateJob(false)}
-                className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
       {/* Schedule Interview Modal */}
       {showScheduleModal && selectedCandidate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Schedule Interview</h3>
-            <p className="text-gray-600 mb-4">Candidate: {selectedCandidate.userId.name}</p>
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <Card className="p-8 w-full max-w-lg shadow-2xl">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center space-x-2">
+              <Calendar className="h-6 w-6 text-blue-600" />
+              <span>Schedule Interview</span>
+            </h3>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+              <p className="text-blue-800 font-semibold">Candidate: {selectedCandidate.userId.name}</p>
+              <p className="text-blue-700 text-sm">Google Meet link will be generated automatically</p>
+            </div>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
               <input
                 type="datetime-local"
                 value={newInterview.scheduledDateTime}
                 onChange={(e) => setNewInterview({...newInterview, scheduledDateTime: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
               
               <select
@@ -382,59 +463,56 @@ export default function HRDashboard() {
                 placeholder="Duration (minutes)"
                 value={newInterview.duration}
                 onChange={(e) => setNewInterview({...newInterview, duration: parseInt(e.target.value)})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-              
-              <input
-                type="url"
-                placeholder="Meeting Link"
-                value={newInterview.meetingLink}
-                onChange={(e) => setNewInterview({...newInterview, meetingLink: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
               
               <textarea
                 placeholder="Notes"
                 value={newInterview.notes}
                 onChange={(e) => setNewInterview({...newInterview, notes: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 rows={3}
               />
             </div>
             
-            <div className="flex space-x-3 mt-6">
-              <button
+            <div className="flex space-x-4 mt-8">
+              <Button
                 onClick={scheduleInterview}
                 disabled={loading}
-                className="flex-1 bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+                loading={loading}
+                className="flex-1"
               >
                 {loading ? 'Scheduling...' : 'Schedule'}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => {
                   setShowScheduleModal(false);
                   setSelectedCandidate(null);
                 }}
-                className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
       {/* View Toggle */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+      <Card className="p-8" gradient>
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">Management Dashboard</h2>
-          <div className="flex space-x-2">
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
+            <Zap className="h-6 w-6 text-blue-600" />
+            <span>Management Dashboard</span>
+          </h2>
+          <div className="flex space-x-3">
             <button
               onClick={() => setView('jobs')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-6 py-3 rounded-xl transition-all duration-200 font-medium ${
                 view === 'jobs' 
-                  ? 'bg-primary-600 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
               }`}
             >
               My Jobs
@@ -451,10 +529,10 @@ export default function HRDashboard() {
             </button>
             <button
               onClick={() => setView('interviews')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-6 py-3 rounded-xl transition-all duration-200 font-medium ${
                 view === 'interviews' 
-                  ? 'bg-primary-600 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
               }`}
             >
               Interviews
@@ -463,29 +541,30 @@ export default function HRDashboard() {
         </div>
 
         {view === 'jobs' && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {jobs.map((job) => (
-              <div key={job._id} className="border border-gray-200 rounded-lg p-4">
+              <div key={job._id} className="bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 text-lg">{job.title}</h3>
-                    <p className="text-gray-600">{job.company} • {job.location}</p>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <h3 className="font-bold text-gray-900 text-xl">{job.title}</h3>
+                    <p className="text-gray-700 font-medium text-lg">{job.company} • {job.location}</p>
+                    <p className="text-sm text-gray-600 mt-2 font-medium">
                       {job.applicants?.length || 0} applicants
                     </p>
                   </div>
-                  <div className="flex space-x-2">
-                    <button 
+                  <div className="flex space-x-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => {
                         setSelectedJob(job._id);
                         setView('applicants');
                         loadJobApplicants(job._id);
                       }}
-                      className="px-3 py-1 text-sm bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors flex items-center space-x-1"
+                      icon={Eye}
                     >
-                      <Eye className="h-4 w-4" />
-                      <span>View Applicants</span>
-                    </button>
+                      View Applicants
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -550,47 +629,67 @@ export default function HRDashboard() {
         )}
 
         {view === 'interviews' && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {interviews.map((interview) => (
-              <div key={interview._id} className="border border-gray-200 rounded-lg p-4">
+              <div key={interview._id} className="bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-lg">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900">
+                    <h4 className="font-bold text-gray-900 text-lg">
                       {interview.candidateId?.name} - {interview.jobId?.title}
                     </h4>
-                    <p className="text-gray-600">{interview.jobId?.company}</p>
-                    <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                      <span>{new Date(interview.scheduledDateTime).toLocaleDateString()}</span>
-                      <span>{new Date(interview.scheduledDateTime).toLocaleTimeString()}</span>
-                      <span>{interview.duration} min</span>
+                    <p className="text-gray-700 font-medium">{interview.jobId?.company}</p>
+                    <div className="flex items-center space-x-4 text-sm text-gray-700 mt-2">
+                      <span className="font-medium">{new Date(interview.scheduledDateTime).toLocaleDateString()}</span>
+                      <span className="font-medium">{new Date(interview.scheduledDateTime).toLocaleTimeString()}</span>
+                      <span className="font-medium">{interview.duration} min</span>
                     </div>
                     {interview.candidateBrief && (
-                      <div className="mt-2 p-3 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-blue-800">{interview.candidateBrief}</p>
+                      <div className="mt-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                        <p className="text-sm text-blue-800 font-medium">{interview.candidateBrief}</p>
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col items-end space-y-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(interview.status)}`}>
+                  <div className="flex flex-col items-end space-y-3">
+                    <span className={`px-3 py-1.5 rounded-full text-sm font-bold shadow-lg ${getStatusColor(interview.status)}`}>
                       {interview.status}
                     </span>
                     {interview.meetingLink && (
-                      <a
-                        href={interview.meetingLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary-600 hover:text-primary-700 text-sm"
-                      >
-                        Join Meeting
-                      </a>
+                      <div className="flex flex-col space-y-2">
+                        <a
+                          href={interview.meetingLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-700 text-sm font-semibold flex items-center space-x-1"
+                        >
+                          <Video className="h-4 w-4" />
+                          <span>Join Meeting</span>
+                        </a>
+                        {interview.status === 'confirmed' && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => endMeeting(interview._id)}
+                            icon={CheckCircle}
+                          >
+                            End Meeting
+                          </Button>
+                        )}
+                      </div>
                     )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => loadCandidateFeedbackHistory(interview.candidateId._id)}
+                      >
+                      View History
+                    </Button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

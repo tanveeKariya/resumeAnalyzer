@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Brain, Mail, Lock, User, AlertCircle } from 'lucide-react';
+import { Brain, Mail, Lock, User, AlertCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import Card from '../components/ui/Card';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -49,118 +52,115 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-2 mb-6">
-            <Brain className="h-8 w-8 text-primary-600" />
-            <span className="text-2xl font-bold text-gray-900">CareerAI</span>
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+              <Brain className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">CareerAI</span>
           </Link>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-          <p className="text-gray-600">Sign in to your account to continue</p>
+          <h2 className="text-4xl font-bold text-gray-900 mb-3">Welcome Back</h2>
+          <p className="text-gray-600 text-lg">Sign in to your account to continue your journey</p>
         </div>
 
         {/* Demo Login Cards */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-8">
           <button
             onClick={() => handleDemoLogin('candidate')}
             disabled={loading}
-            className="p-4 bg-white rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all disabled:opacity-50"
+            className="p-6 bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 hover:border-blue-300 hover:bg-blue-50 transition-all disabled:opacity-50 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
-            <User className="h-6 w-6 text-primary-600 mx-auto mb-2" />
-            <p className="font-semibold text-gray-900">Demo Candidate</p>
-            <p className="text-xs text-gray-500">Try as job seeker</p>
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <User className="h-6 w-6 text-white" />
+            </div>
+            <p className="font-bold text-gray-900">Demo Candidate</p>
+            <p className="text-sm text-gray-600">Try as job seeker</p>
           </button>
           
           <button
             onClick={() => handleDemoLogin('hr')}
             disabled={loading}
-            className="p-4 bg-white rounded-lg border border-gray-200 hover:border-secondary-300 hover:bg-secondary-50 transition-all disabled:opacity-50"
+            className="p-6 bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 hover:border-purple-300 hover:bg-purple-50 transition-all disabled:opacity-50 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
-            <Brain className="h-6 w-6 text-secondary-600 mx-auto mb-2" />
-            <p className="font-semibold text-gray-900">Demo HR</p>
-            <p className="text-xs text-gray-500">Try as recruiter</p>
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <Sparkles className="h-6 w-6 text-white" />
+            </div>
+            <p className="font-bold text-gray-900">Demo HR</p>
+            <p className="text-sm text-gray-600">Try as recruiter</p>
           </button>
         </div>
 
         {/* Login Form */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <Card className="p-8 backdrop-blur-sm bg-white/80 shadow-2xl border-white/20">
           {error && (
-            <div className="mb-4 p-4 bg-error-50 border border-error-200 rounded-lg flex items-center space-x-2">
-              <AlertCircle className="h-5 w-5 text-error-600" />
-              <span className="text-error-800 text-sm">{error}</span>
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <span className="text-red-800 text-sm">{error}</span>
             </div>
           )}
           
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-            </div>
+            <Input
+              type="email"
+              label="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              icon={Mail}
+              placeholder="Enter your email"
+              required
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                  placeholder="Enter your password"
-                  required
-                />
-              </div>
-            </div>
+            <Input
+              type="password"
+              label="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              icon={Lock}
+              placeholder="Enter your password"
+              required
+            />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Role
               </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as 'hr' | 'candidate')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none"
                 required
               >
                 <option value="candidate">Job Candidate</option>
                 <option value="hr">HR / Recruiter</option>
               </select>
+              </div>
             </div>
 
-            <button
-              type="submit"
+            <Button
+              type="submit" 
               disabled={loading}
-              className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              loading={loading}
+              className="w-full"
+              size="lg"
             >
               {loading ? 'Signing In...' : 'Sign In'}
-            </button>
+            </Button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-primary-600 hover:text-primary-700 font-semibold">
+              <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-semibold">
                 Sign up
               </Link>
             </p>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );
