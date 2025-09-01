@@ -1,292 +1,384 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Brain, Users, Calendar, TrendingUp, CheckCircle, Star, Zap, Shield, Target, Award, ArrowRight, Play } from 'lucide-react';
+import { Brain, Users, Calendar, TrendingUp, CheckCircle, Star, Zap, Shield, Target, Award, ArrowRight, Play, Sparkles, Globe, Clock } from 'lucide-react';
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-brand-50 to-violet-100 relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-200/30 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-200/30 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-emerald-200/30 rounded-full blur-3xl animate-float" style={{ animationDelay: '4s' }}></div>
+      </div>
+
       {/* Header */}
-      <header className="container mx-auto px-6 py-6 flex justify-between items-center backdrop-blur-sm bg-white/80 rounded-2xl mt-4 shadow-lg border border-white/20">
-        <div className="flex items-center space-x-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-            <Brain className="h-6 w-6 text-white" />
+      <header className="relative z-10 container mx-auto px-6 py-8">
+        <nav className="glass rounded-3xl px-8 py-6 shadow-large border border-white/20">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 gradient-brand rounded-2xl flex items-center justify-center shadow-medium">
+                <Brain className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <span className="text-2xl font-bold gradient-text">CareerAI</span>
+                <p className="text-xs text-slate-500 font-medium">Intelligent Hiring Platform</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-6">
+              <Link to="/login" className="text-slate-700 hover:text-brand-600 transition-colors font-semibold">
+                Sign In
+              </Link>
+              <Link 
+                to="/signup" 
+                className="button-primary"
+              >
+                Get Started Free
+              </Link>
+            </div>
           </div>
-          <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">CareerAI</span>
-        </div>
-        <div className="flex items-center space-x-6">
-          <Link to="/login" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
-            Login
-          </Link>
-          <Link 
-            to="/signup" 
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2.5 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl font-medium"
-          >
-            Get Started
-          </Link>
-        </div>
+        </nav>
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-6 py-24 text-center">
-        <div className="max-w-4xl mx-auto">
-          <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-8">
-            <Zap className="h-4 w-4 mr-2" />
+      <section className="relative z-10 container mx-auto px-6 py-24 text-center">
+        <div className="max-w-5xl mx-auto">
+          <div className="inline-flex items-center px-6 py-3 glass rounded-full text-brand-700 font-semibold mb-8 shadow-soft border border-brand-200/60">
+            <Sparkles className="h-5 w-5 mr-2" />
             Powered by Advanced AI Technology
           </div>
-          <h1 className="text-6xl font-bold mb-6 leading-tight">
-            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              Transform Hiring
-            </span>
-            <br />
-            <span className="text-gray-900">with AI Intelligence</span>
+          
+          <h1 className="text-7xl lg:text-8xl font-bold mb-8 leading-tight">
+            <span className="gradient-text block">Transform</span>
+            <span className="text-slate-900 block">Hiring Forever</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-10 leading-relaxed max-w-3xl mx-auto">
-            Revolutionize your recruitment process with AI-powered resume analysis, intelligent job matching, 
-            automated testing, and seamless interview scheduling. Find the perfect candidates faster than ever.
+          
+          <p className="text-xl lg:text-2xl text-slate-600 mb-12 leading-relaxed max-w-4xl mx-auto font-medium">
+            Revolutionize recruitment with AI-powered resume analysis, intelligent matching, 
+            automated testing, and seamless interview scheduling. Find perfect candidates 80% faster.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
+          
+          <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6 mb-16">
             <Link 
               to="/signup" 
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 flex items-center space-x-2"
+              className="button-primary text-lg px-10 py-5 shadow-large hover:shadow-glow-lg group"
             >
               <span>Start Free Trial</span>
-              <ArrowRight className="h-5 w-5" />
+              <ArrowRight className="h-6 w-6 ml-3 group-hover:translate-x-1 transition-transform" />
             </Link>
             <button 
-              className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-blue-50 transition-all duration-300 flex items-center space-x-2"
+              className="button-outline text-lg px-10 py-5 group"
             >
-              <Play className="h-5 w-5" />
+              <Play className="h-6 w-6 mr-3 group-hover:scale-110 transition-transform" />
               <span>Watch Demo</span>
             </button>
           </div>
           
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 mt-16 max-w-2xl mx-auto">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">95%</div>
-              <div className="text-gray-600 text-sm">Accuracy Rate</div>
+          {/* Hero Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
+            <div className="glass rounded-3xl p-8 shadow-medium border border-white/20 hover:shadow-large transition-all duration-300">
+              <div className="text-4xl font-bold gradient-text mb-2">95%</div>
+              <div className="text-slate-600 font-semibold">Accuracy Rate</div>
+              <div className="text-sm text-slate-500 mt-1">AI-powered analysis</div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">80%</div>
-              <div className="text-gray-600 text-sm">Time Saved</div>
+            <div className="glass rounded-3xl p-8 shadow-medium border border-white/20 hover:shadow-large transition-all duration-300">
+              <div className="text-4xl font-bold gradient-text mb-2">80%</div>
+              <div className="text-slate-600 font-semibold">Time Saved</div>
+              <div className="text-sm text-slate-500 mt-1">Automated workflows</div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-indigo-600 mb-2">10k+</div>
-              <div className="text-gray-600 text-sm">Resumes Processed</div>
+            <div className="glass rounded-3xl p-8 shadow-medium border border-white/20 hover:shadow-large transition-all duration-300">
+              <div className="text-4xl font-bold gradient-text mb-2">50k+</div>
+              <div className="text-slate-600 font-semibold">Resumes Processed</div>
+              <div className="text-sm text-slate-500 mt-1">And growing daily</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Showcase */}
-      <section className="container mx-auto px-6 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Powerful Features</h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Everything you need to streamline your recruitment process and find the best talent
+      <section className="relative z-10 container mx-auto px-6 py-24">
+        <div className="text-center mb-20">
+          <h2 className="text-5xl font-bold text-slate-900 mb-6">Powerful AI Features</h2>
+          <p className="text-xl text-slate-600 max-w-3xl mx-auto font-medium">
+            Everything you need to revolutionize your recruitment process and discover exceptional talent
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6">
-              <Brain className="h-8 w-8 text-white" />
+        <div className="grid lg:grid-cols-3 gap-10">
+          <div className="glass p-10 rounded-3xl shadow-large border border-white/20 hover:shadow-glow transition-all duration-500 group">
+            <div className="w-20 h-20 gradient-brand rounded-3xl flex items-center justify-center mb-8 shadow-medium group-hover:shadow-large group-hover:scale-110 transition-all duration-300">
+              <Brain className="h-10 w-10 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">AI Resume Analysis</h3>
-            <p className="text-gray-600 mb-4">
-              Advanced NLP technology extracts key skills, experience, and qualifications with 95% accuracy.
+            <h3 className="text-2xl font-bold text-slate-900 mb-6">AI Resume Analysis</h3>
+            <p className="text-slate-600 mb-6 leading-relaxed">
+              Advanced NLP technology extracts skills, experience, and qualifications with industry-leading 95% accuracy.
             </p>
-            <ul className="space-y-2 text-sm text-gray-600">
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Skill extraction & categorization</span>
+            <ul className="space-y-3 text-slate-600">
+              <li className="flex items-center space-x-3">
+                <CheckCircle className="h-5 w-5 text-emerald-500" />
+                <span className="font-medium">Intelligent skill extraction</span>
               </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Experience timeline analysis</span>
+              <li className="flex items-center space-x-3">
+                <CheckCircle className="h-5 w-5 text-emerald-500" />
+                <span className="font-medium">Experience timeline analysis</span>
               </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Education & certification parsing</span>
+              <li className="flex items-center space-x-3">
+                <CheckCircle className="h-5 w-5 text-emerald-500" />
+                <span className="font-medium">Education & certification parsing</span>
               </li>
             </ul>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6">
-              <Target className="h-8 w-8 text-white" />
+          <div className="glass p-10 rounded-3xl shadow-large border border-white/20 hover:shadow-glow transition-all duration-500 group">
+            <div className="w-20 h-20 bg-gradient-to-br from-violet-500 to-violet-600 rounded-3xl flex items-center justify-center mb-8 shadow-medium group-hover:shadow-large group-hover:scale-110 transition-all duration-300">
+              <Target className="h-10 w-10 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Smart Testing</h3>
-            <p className="text-gray-600 mb-4">
-              Automated technical assessments with AI-generated questions tailored to each role.
+            <h3 className="text-2xl font-bold text-slate-900 mb-6">Smart Testing</h3>
+            <p className="text-slate-600 mb-6 leading-relaxed">
+              AI-generated technical assessments with role-specific questions and intelligent scoring algorithms.
             </p>
-            <ul className="space-y-2 text-sm text-gray-600">
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Role-specific questions</span>
+            <ul className="space-y-3 text-slate-600">
+              <li className="flex items-center space-x-3">
+                <CheckCircle className="h-5 w-5 text-emerald-500" />
+                <span className="font-medium">Dynamic question generation</span>
               </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Time-bound assessments</span>
+              <li className="flex items-center space-x-3">
+                <CheckCircle className="h-5 w-5 text-emerald-500" />
+                <span className="font-medium">Adaptive difficulty levels</span>
               </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Automated scoring & filtering</span>
+              <li className="flex items-center space-x-3">
+                <CheckCircle className="h-5 w-5 text-emerald-500" />
+                <span className="font-medium">Instant scoring & insights</span>
               </li>
             </ul>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-            <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-6">
-              <Calendar className="h-8 w-8 text-white" />
+          <div className="glass p-10 rounded-3xl shadow-large border border-white/20 hover:shadow-glow transition-all duration-500 group">
+            <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl flex items-center justify-center mb-8 shadow-medium group-hover:shadow-large group-hover:scale-110 transition-all duration-300">
+              <Calendar className="h-10 w-10 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Seamless Scheduling</h3>
-            <p className="text-gray-600 mb-4">
-              Automated interview scheduling with Google Meet integration and feedback collection.
+            <h3 className="text-2xl font-bold text-slate-900 mb-6">Seamless Scheduling</h3>
+            <p className="text-slate-600 mb-6 leading-relaxed">
+              Automated interview scheduling with Google Meet integration and comprehensive feedback collection.
             </p>
-            <ul className="space-y-2 text-sm text-gray-600">
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Google Meet auto-generation</span>
+            <ul className="space-y-3 text-slate-600">
+              <li className="flex items-center space-x-3">
+                <CheckCircle className="h-5 w-5 text-emerald-500" />
+                <span className="font-medium">Auto Google Meet generation</span>
               </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Calendar integration</span>
+              <li className="flex items-center space-x-3">
+                <CheckCircle className="h-5 w-5 text-emerald-500" />
+                <span className="font-medium">Smart calendar integration</span>
               </li>
-              <li className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Automated feedback collection</span>
+              <li className="flex items-center space-x-3">
+                <CheckCircle className="h-5 w-5 text-emerald-500" />
+                <span className="font-medium">Automated feedback workflows</span>
               </li>
             </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="bg-white/50 backdrop-blur-sm py-20">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Complete Recruitment Workflow</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              From resume upload to final hiring decision - our AI handles every step of the process
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="group">
-              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/20 group-hover:border-blue-200">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Brain className="h-7 w-7 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">AI Resume Analysis</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  Extract key skills and experiences from resumes using advanced NLP technology with 95% accuracy.
-                </p>
-              </div>
-            </div>
-
-            <div className="group">
-              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/20 group-hover:border-purple-200">
-                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <TrendingUp className="h-7 w-7 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">Smart Matching</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  Match candidates to job roles with AI-powered similarity analysis and intelligent scoring algorithms.
-                </p>
-              </div>
-            </div>
-
-            <div className="group">
-              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/20 group-hover:border-emerald-200">
-                <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Shield className="h-7 w-7 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">Automated Testing</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  AI-generated technical assessments with role-specific questions and automated scoring system.
-                </p>
-              </div>
-            </div>
-
-            <div className="group">
-              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-white/20 group-hover:border-indigo-200">
-                <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Calendar className="h-7 w-7 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">Smart Scheduling</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  Automated interview scheduling with Google Meet integration and intelligent feedback collection.
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20">
+      <section className="relative z-10 py-24">
         <div className="container mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-8">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="space-y-8">
+              <h2 className="text-5xl font-bold text-slate-900 mb-8">
                 Why Choose CareerAI?
               </h2>
-              <div className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                    <Zap className="h-5 w-5 text-green-600" />
+              
+              <div className="space-y-8">
+                <div className="flex items-start space-x-6">
+                  <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center shadow-soft">
+                    <Zap className="h-7 w-7 text-emerald-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-lg">Save 80% Time</h3>
-                    <p className="text-gray-600">Automate resume screening, testing, and candidate evaluation with AI</p>
+                    <h3 className="font-bold text-slate-900 text-xl mb-2">Save 80% Time</h3>
+                    <p className="text-slate-600 leading-relaxed">Automate resume screening, testing, and candidate evaluation with cutting-edge AI technology</p>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <Target className="h-5 w-5 text-blue-600" />
+                
+                <div className="flex items-start space-x-6">
+                  <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center shadow-soft">
+                    <Target className="h-7 w-7 text-brand-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-lg">Improve Quality</h3>
-                    <p className="text-gray-600">AI-powered matching and testing ensures better candidate-job fit</p>
+                    <h3 className="font-bold text-slate-900 text-xl mb-2">Improve Quality</h3>
+                    <p className="text-slate-600 leading-relaxed">AI-powered matching and testing ensures superior candidate-job fit and better hiring outcomes</p>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <Shield className="h-5 w-5 text-purple-600" />
+                
+                <div className="flex items-start space-x-6">
+                  <div className="w-14 h-14 bg-violet-100 rounded-2xl flex items-center justify-center shadow-soft">
+                    <Shield className="h-7 w-7 text-violet-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-lg">Reduce Bias</h3>
-                    <p className="text-gray-600">Objective evaluation based on skills, experience, and test performance</p>
+                    <h3 className="font-bold text-slate-900 text-xl mb-2">Reduce Bias</h3>
+                    <p className="text-slate-600 leading-relaxed">Objective evaluation based on skills, experience, and performance metrics for fair hiring</p>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                    <Users className="h-5 w-5 text-indigo-600" />
+                
+                <div className="flex items-start space-x-6">
+                  <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center shadow-soft">
+                    <Users className="h-7 w-7 text-amber-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-lg">Scale Efficiently</h3>
-                    <p className="text-gray-600">Handle hundreds of applications with automated workflows</p>
+                    <h3 className="font-bold text-slate-900 text-xl mb-2">Scale Efficiently</h3>
+                    <p className="text-slate-600 leading-relaxed">Handle thousands of applications with intelligent automated workflows and smart filtering</p>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-600 rounded-3xl p-10 text-white shadow-2xl">
-              <div className="text-center">
-                <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <Award className="h-10 w-10 text-white" />
+            
+            <div className="relative">
+              <div className="glass rounded-4xl p-12 shadow-large border border-white/20 text-center relative overflow-hidden">
+                {/* Background Pattern */}
+                <div className="absolute inset-0 opacity-5">
+                  <div className="absolute top-0 right-0 w-40 h-40 gradient-brand rounded-full -translate-y-20 translate-x-20"></div>
+                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-br from-violet-500 to-violet-600 rounded-full translate-y-16 -translate-x-16"></div>
                 </div>
-                <h3 className="text-3xl font-bold mb-4">Ready to Transform Hiring?</h3>
-                <p className="mb-8 opacity-90 text-lg">
-                  Join thousands of companies using AI to find the perfect candidates faster.
-                </p>
+                
+                <div className="relative z-10">
+                  <div className="w-24 h-24 gradient-brand rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-large">
+                    <Award className="h-12 w-12 text-white" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-slate-900 mb-6">Ready to Transform Hiring?</h3>
+                  <p className="text-lg text-slate-600 mb-8 leading-relaxed">
+                    Join thousands of companies using AI to discover exceptional talent and build amazing teams.
+                  </p>
+                  <Link 
+                    to="/signup"
+                    className="button-primary text-lg px-10 py-5 shadow-large hover:shadow-glow-lg group"
+                  >
+                    <span>Start Your Free Trial</span>
+                    <ArrowRight className="h-6 w-6 ml-3 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                  
+                  <div className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-slate-200/60">
+                    <div>
+                      <div className="text-2xl font-bold text-brand-600 mb-1">24/7</div>
+                      <div className="text-sm text-slate-500 font-medium">AI Support</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-violet-600 mb-1">99.9%</div>
+                      <div className="text-sm text-slate-500 font-medium">Uptime</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-emerald-600 mb-1">SOC2</div>
+                      <div className="text-sm text-slate-500 font-medium">Compliant</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Process Section */}
+      <section className="relative z-10 py-24 bg-white/30 backdrop-blur-sm">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-20">
+            <h2 className="text-5xl font-bold text-slate-900 mb-6">How It Works</h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto font-medium">
+              Simple, powerful, and intelligent - our AI handles the complexity so you can focus on what matters
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="text-center group">
+              <div className="w-20 h-20 gradient-brand rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-medium group-hover:shadow-large group-hover:scale-110 transition-all duration-300">
+                <Upload className="h-10 w-10 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Upload Resume</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Candidates upload resumes in PDF or DOCX format for instant AI analysis
+              </p>
+            </div>
+
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-gradient-to-br from-violet-500 to-violet-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-medium group-hover:shadow-large group-hover:scale-110 transition-all duration-300">
+                <Brain className="h-10 w-10 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">AI Analysis</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Advanced algorithms extract skills, experience, and qualifications with precision
+              </p>
+            </div>
+
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-medium group-hover:shadow-large group-hover:scale-110 transition-all duration-300">
+                <Target className="h-10 w-10 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Smart Matching</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Intelligent algorithms match candidates to perfect job opportunities
+              </p>
+            </div>
+
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-amber-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-medium group-hover:shadow-large group-hover:scale-110 transition-all duration-300">
+                <Calendar className="h-10 w-10 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Interview & Hire</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Seamless scheduling, testing, and feedback collection for optimal hiring decisions
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof */}
+      <section className="relative z-10 py-24">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-slate-900 mb-4">Trusted by Industry Leaders</h2>
+            <p className="text-lg text-slate-600">Companies worldwide rely on CareerAI for their hiring needs</p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 opacity-60">
+            {['TechCorp', 'InnovateLabs', 'FutureWorks', 'DataDriven'].map((company, index) => (
+              <div key={index} className="glass rounded-2xl p-6 text-center shadow-soft border border-white/20">
+                <div className="w-12 h-12 bg-slate-200 rounded-xl mx-auto mb-3"></div>
+                <p className="font-bold text-slate-700">{company}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="relative z-10 py-24">
+        <div className="container mx-auto px-6">
+          <div className="glass rounded-4xl p-16 text-center shadow-large border border-white/20 relative overflow-hidden">
+            {/* Background Elements */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 left-0 w-64 h-64 gradient-brand rounded-full -translate-y-32 -translate-x-32"></div>
+              <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-br from-violet-500 to-violet-600 rounded-full translate-y-40 translate-x-40"></div>
+            </div>
+            
+            <div className="relative z-10">
+              <h2 className="text-5xl font-bold text-slate-900 mb-6">
+                Start Hiring Smarter Today
+              </h2>
+              <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Transform your recruitment process with AI. No setup fees, no long-term contracts. 
+                Start your free trial and see results immediately.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
                 <Link 
-                  to="/signup"
-                  className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 inline-flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                  to="/signup" 
+                  className="button-primary text-lg px-12 py-5 shadow-large hover:shadow-glow-lg"
                 >
-                  <span>Start Your Free Trial</span>
-                  <ArrowRight className="h-5 w-5" />
+                  Start Free Trial
                 </Link>
+                <div className="flex items-center space-x-2 text-slate-600">
+                  <CheckCircle className="h-5 w-5 text-emerald-500" />
+                  <span className="font-medium">No credit card required</span>
+                </div>
               </div>
             </div>
           </div>
@@ -294,47 +386,61 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-16">
+      <footer className="relative z-10 bg-slate-900 text-white py-20">
         <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Brain className="h-5 w-5 text-white" />
+          <div className="grid md:grid-cols-4 gap-12 mb-12">
+            <div className="space-y-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 gradient-brand rounded-xl flex items-center justify-center shadow-medium">
+                  <Brain className="h-6 w-6 text-white" />
                 </div>
-                <span className="text-xl font-bold">CareerAI</span>
+                <span className="text-2xl font-bold">CareerAI</span>
               </div>
-              <p className="text-gray-400 text-sm">
-                Revolutionizing recruitment with AI-powered intelligence and automation.
+              <p className="text-slate-400 leading-relaxed">
+                Revolutionizing recruitment with AI-powered intelligence, automation, and insights for the modern workplace.
               </p>
+              <div className="flex space-x-4">
+                {[Globe, Users, Star].map((Icon, index) => (
+                  <div key={index} className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center hover:bg-slate-700 transition-colors cursor-pointer">
+                    <Icon className="h-5 w-5 text-slate-400" />
+                  </div>
+                ))}
+              </div>
             </div>
+            
             <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
+              <h4 className="font-bold text-lg mb-6">Product</h4>
+              <ul className="space-y-3 text-slate-400">
+                <li><a href="#" className="hover:text-white transition-colors font-medium">Features</a></li>
+                <li><a href="#" className="hover:text-white transition-colors font-medium">Pricing</a></li>
+                <li><a href="#" className="hover:text-white transition-colors font-medium">API Documentation</a></li>
+                <li><a href="#" className="hover:text-white transition-colors font-medium">Integrations</a></li>
               </ul>
             </div>
+            
             <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
+              <h4 className="font-bold text-lg mb-6">Company</h4>
+              <ul className="space-y-3 text-slate-400">
+                <li><a href="#" className="hover:text-white transition-colors font-medium">About Us</a></li>
+                <li><a href="#" className="hover:text-white transition-colors font-medium">Blog</a></li>
+                <li><a href="#" className="hover:text-white transition-colors font-medium">Careers</a></li>
+                <li><a href="#" className="hover:text-white transition-colors font-medium">Press Kit</a></li>
               </ul>
             </div>
+            
             <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
+              <h4 className="font-bold text-lg mb-6">Support</h4>
+              <ul className="space-y-3 text-slate-400">
+                <li><a href="#" className="hover:text-white transition-colors font-medium">Help Center</a></li>
+                <li><a href="#" className="hover:text-white transition-colors font-medium">Contact Support</a></li>
+                <li><a href="#" className="hover:text-white transition-colors font-medium">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-white transition-colors font-medium">Terms of Service</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-700 pt-8 text-center">
-            <p className="text-gray-400">
+          
+          <div className="border-t border-slate-800 pt-8 text-center">
+            <p className="text-slate-400 font-medium">
               © 2025 CareerAI. Built for GFG x Accenture Hackathon. All rights reserved.
             </p>
           </div>

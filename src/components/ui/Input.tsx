@@ -1,5 +1,5 @@
 import React from 'react';
-import { DivideIcon as LucideIcon } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 interface InputProps {
   type?: string;
@@ -12,6 +12,7 @@ interface InputProps {
   required?: boolean;
   disabled?: boolean;
   className?: string;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export default function Input({
@@ -24,18 +25,25 @@ export default function Input({
   label,
   required = false,
   disabled = false,
-  className = ''
+  className = '',
+  size = 'md'
 }: InputProps) {
+  const sizeClasses = {
+    sm: 'px-3 py-2 text-sm',
+    md: 'px-4 py-3 text-base',
+    lg: 'px-6 py-4 text-lg'
+  };
+
   return (
     <div className={`space-y-2 ${className}`}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
-          {label} {required && <span className="text-red-500">*</span>}
+        <label className="block text-sm font-semibold text-slate-700">
+          {label} {required && <span className="text-rose-500">*</span>}
         </label>
       )}
-      <div className="relative">
+      <div className="relative group">
         {Icon && (
-          <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Icon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-brand-500 transition-colors" />
         )}
         <input
           type={type}
@@ -44,13 +52,15 @@ export default function Input({
           onChange={onChange}
           required={required}
           disabled={disabled}
-          className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
-            error ? 'border-red-500 focus:ring-red-500' : ''
-          } ${disabled ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+          className={`input-field ${Icon ? 'pl-12' : ''} ${sizeClasses[size]} ${
+            error 
+              ? 'border-rose-300 focus:ring-rose-500 focus:border-rose-500' 
+              : 'focus:ring-brand-500 focus:border-brand-500'
+          } ${disabled ? 'bg-slate-100 cursor-not-allowed opacity-60' : 'hover:border-slate-400'}`}
         />
       </div>
       {error && (
-        <p className="text-sm text-red-600">{error}</p>
+        <p className="text-sm text-rose-600 font-medium animate-slide-down">{error}</p>
       )}
     </div>
   );

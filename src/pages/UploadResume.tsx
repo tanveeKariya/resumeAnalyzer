@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle, Brain, Download, Eye, Zap, Award, Sparkles } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Brain, Download, Eye, Zap, Award, Sparkles, ArrowRight, Clock } from 'lucide-react';
 import { ResumeService } from '../services/resumeService';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -107,64 +107,66 @@ export default function UploadResume() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-fade-in">
       <div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-3 flex items-center space-x-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-            <Upload className="h-6 w-6 text-white" />
+        <h1 className="text-5xl font-bold text-slate-900 mb-4 flex items-center space-x-4">
+          <div className="w-16 h-16 gradient-brand rounded-3xl flex items-center justify-center shadow-large">
+            <Upload className="h-8 w-8 text-white" />
           </div>
           <span>Upload Resume</span>
         </h1>
-        <p className="text-gray-600 text-lg">Upload your resume to get AI-powered analysis, job matching, and career recommendations</p>
+        <p className="text-slate-600 text-xl font-medium leading-relaxed">
+          Upload your resume to get AI-powered analysis, intelligent job matching, and personalized career recommendations
+        </p>
       </div>
 
       {/* Upload Section */}
-      <Card className="p-10 shadow-2xl" gradient>
+      <Card glass padding="xl" shadow="large" className="border border-white/20">
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center space-x-2">
-            <AlertCircle className="h-5 w-5 text-red-600" />
-            <span className="text-red-800 text-sm">{error}</span>
+          <div className="mb-8 p-6 bg-rose-50 border border-rose-200 rounded-2xl flex items-center space-x-3 animate-slide-down">
+            <AlertCircle className="h-6 w-6 text-rose-600" />
+            <span className="text-rose-800 font-semibold">{error}</span>
           </div>
         )}
         
         <div 
-          className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
+          className={`border-2 border-dashed rounded-3xl p-16 text-center transition-all duration-300 ${
             dragOver 
-              ? 'border-blue-400 bg-blue-50 scale-105' 
+              ? 'border-brand-400 bg-brand-50/50 scale-105 shadow-glow' 
               : uploaded 
-              ? 'border-green-400 bg-green-50'
-              : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50/30'
+              ? 'border-emerald-400 bg-emerald-50/50 shadow-large'
+              : 'border-slate-300 hover:border-brand-400 hover:bg-brand-50/30 hover:shadow-medium'
           }`}
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
         >
           {uploaded ? (
-            <div className="space-y-6">
-              <div className="w-20 h-20 bg-green-100 rounded-2xl flex items-center justify-center mx-auto">
-                <CheckCircle className="h-10 w-10 text-green-600" />
+            <div className="space-y-8">
+              <div className="w-24 h-24 bg-emerald-100 rounded-3xl flex items-center justify-center mx-auto shadow-large">
+                <CheckCircle className="h-12 w-12 text-emerald-600" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-gray-900">Resume Uploaded Successfully!</h3>
-                <p className="text-gray-600 mt-3 text-lg">Your resume has been processed and analyzed with AI precision.</p>
+                <h3 className="text-3xl font-bold text-slate-900 mb-4">Resume Uploaded Successfully!</h3>
+                <p className="text-slate-600 text-lg font-medium">Your resume has been processed and analyzed with AI precision.</p>
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
-              <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto">
-                <Upload className="h-10 w-10 text-gray-400" />
+            <div className="space-y-8">
+              <div className="w-24 h-24 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto shadow-medium">
+                <Upload className="h-12 w-12 text-slate-400" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-gray-900">
+                <h3 className="text-3xl font-bold text-slate-900 mb-4">
                   {file ? 'Ready to Upload' : 'Drop your resume here'}
                 </h3>
-                <p className="text-gray-600 mt-3 text-lg">
+                <p className="text-slate-600 text-lg font-medium mb-2">
                   {file ? `Selected: ${file.name}` : 'or click to browse files'}
                 </p>
-                <p className="text-gray-500 mt-2">Supports PDF and DOCX files up to 10MB</p>
+                <p className="text-slate-500 font-medium">Supports PDF and DOCX files up to 10MB</p>
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <input
                   type="file"
                   accept=".pdf,.docx"
@@ -174,9 +176,9 @@ export default function UploadResume() {
                 />
                 <label
                   htmlFor="file-upload"
-                  className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl transform hover:-translate-y-1 font-semibold"
+                  className="button-primary text-lg px-10 py-5 cursor-pointer inline-flex items-center shadow-large hover:shadow-glow-lg group"
                 >
-                  <FileText className="h-5 w-5 mr-3" />
+                  <FileText className="h-6 w-6 mr-3" />
                   Browse Files
                 </label>
                 
@@ -184,12 +186,12 @@ export default function UploadResume() {
                   <Button
                     onClick={handleUpload}
                     disabled={uploading}
-                    loading={uploading}
+                    loading={loading}
                     variant="secondary"
-                    size="lg"
+                    size="xl"
                     icon={Brain}
                   >
-                    {uploading ? 'Processing...' : 'Upload & Analyze'}
+                    {uploading ? 'Processing with AI...' : 'Upload & Analyze'}
                   </Button>
                 )}
               </div>
@@ -200,14 +202,21 @@ export default function UploadResume() {
 
       {/* Processing Status */}
       {uploading && (
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 p-8">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center animate-pulse">
-              <Brain className="h-6 w-6 text-white" />
+        <Card className="gradient-brand text-white shadow-large border-0 relative overflow-hidden" padding="xl">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
+          </div>
+          <div className="relative z-10 flex items-center space-x-6">
+            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center animate-pulse-soft shadow-medium">
+              <Brain className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-blue-900 text-lg">Processing Your Resume</h3>
-              <p className="text-blue-700">Our advanced AI is extracting key information, skills, and insights...</p>
+              <h3 className="font-bold text-white text-2xl mb-2">Processing Your Resume</h3>
+              <p className="text-white/90 text-lg font-medium">Our advanced AI is extracting key information, skills, and career insights...</p>
+              <div className="flex items-center space-x-2 mt-3">
+                <Clock className="h-4 w-4 text-white/80" />
+                <span className="text-white/80 text-sm font-medium">Estimated time: 30-60 seconds</span>
+              </div>
             </div>
           </div>
         </Card>
@@ -215,167 +224,195 @@ export default function UploadResume() {
 
       {/* Extracted Data Preview */}
       {extractedData && (
-        <Card className="p-8 shadow-2xl" gradient>
-          <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center space-x-2">
-            <Award className="h-6 w-6 text-blue-600" />
-            <span>AI-Extracted Information</span>
-          </h2>
+        <Card glass padding="xl" shadow="large" className="border border-white/20">
+          <div className="flex items-center justify-between mb-10">
+            <h2 className="text-3xl font-bold text-slate-900 flex items-center space-x-3">
+              <Award className="h-8 w-8 text-brand-600" />
+              <span>AI-Extracted Information</span>
+            </h2>
+            <div className="flex items-center space-x-2 text-emerald-600">
+              <CheckCircle className="h-5 w-5" />
+              <span className="font-semibold">Analysis Complete</span>
+            </div>
+          </div>
           
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-10">
             {/* Personal Info */}
-            <div>
-              <h3 className="font-bold text-gray-900 mb-4 text-lg flex items-center space-x-2">
-                <User className="h-5 w-5 text-blue-600" />
+            <div className="space-y-6">
+              <h3 className="font-bold text-slate-900 text-xl flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-brand-100 rounded-2xl flex items-center justify-center">
+                  <User className="h-6 w-6 text-brand-600" />
+                </div>
                 <span>Personal Information</span>
               </h3>
-              <div className="space-y-3">
-                <p className="flex items-center space-x-2">
-                  <span className="font-semibold text-gray-700">Name:</span> 
-                  <span className="text-gray-900 font-medium">{extractedData.name}</span>
-                </p>
-                <p className="flex items-center space-x-2">
-                  <span className="font-semibold text-gray-700">Email:</span> 
-                  <span className="text-gray-900 font-medium">{extractedData.email}</span>
-                </p>
-                <p className="flex items-center space-x-2">
-                  <span className="font-semibold text-gray-700">Phone:</span> 
-                  <span className="text-gray-900 font-medium">{extractedData.phone}</span>
-                </p>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 p-4 glass rounded-2xl border border-slate-200/60">
+                  <span className="font-bold text-slate-700 min-w-[60px]">Name:</span> 
+                  <span className="text-slate-900 font-semibold">{extractedData.name}</span>
+                </div>
+                <div className="flex items-center space-x-3 p-4 glass rounded-2xl border border-slate-200/60">
+                  <span className="font-bold text-slate-700 min-w-[60px]">Email:</span> 
+                  <span className="text-slate-900 font-semibold">{extractedData.email}</span>
+                </div>
+                <div className="flex items-center space-x-3 p-4 glass rounded-2xl border border-slate-200/60">
+                  <span className="font-bold text-slate-700 min-w-[60px]">Phone:</span> 
+                  <span className="text-slate-900 font-semibold">{extractedData.phone}</span>
+                </div>
                 {extractedData.linkedin && (
-                  <p className="flex items-center space-x-2">
-                    <span className="font-semibold text-gray-700">LinkedIn:</span> 
-                    <span className="text-blue-600 font-medium">{extractedData.linkedin}</span>
-                  </p>
+                  <div className="flex items-center space-x-3 p-4 glass rounded-2xl border border-slate-200/60">
+                    <span className="font-bold text-slate-700 min-w-[60px]">LinkedIn:</span> 
+                    <span className="text-brand-600 font-semibold">{extractedData.linkedin}</span>
+                  </div>
                 )}
               </div>
             </div>
 
             {/* Skills */}
-            <div>
-              <h3 className="font-bold text-gray-900 mb-4 text-lg flex items-center space-x-2">
-                <Zap className="h-5 w-5 text-purple-600" />
+            <div className="space-y-6">
+              <h3 className="font-bold text-slate-900 text-xl flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-violet-100 rounded-2xl flex items-center justify-center">
+                  <Zap className="h-6 w-6 text-violet-600" />
+                </div>
                 <span>Technical Skills</span>
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-3">
                 {extractedData.skills.map((skill: string, index: number) => (
                   <span 
                     key={index}
-                    className="px-3 py-1.5 bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 rounded-full text-sm font-semibold border border-blue-200 shadow-sm"
+                    className="px-4 py-2 bg-gradient-to-r from-brand-100 to-violet-100 text-brand-800 rounded-2xl text-sm font-bold border border-brand-200 shadow-soft hover:shadow-medium transition-all duration-300 hover:scale-105"
                   >
                     {skill}
                   </span>
                 ))}
               </div>
             </div>
-
-            {/* Experience */}
-            <div className="md:col-span-2">
-              <h3 className="font-bold text-gray-900 mb-4 text-lg flex items-center space-x-2">
-                <Award className="h-5 w-5 text-emerald-600" />
-                <span>Professional Experience</span>
-              </h3>
-              <div className="space-y-6">
-                {extractedData.experience.map((exp: any, index: number) => (
-                  <div key={index} className="bg-white/60 backdrop-blur-sm border-l-4 border-emerald-400 rounded-r-xl p-4 shadow-sm">
-                    <h4 className="font-bold text-gray-900 text-lg">{exp.title}</h4>
-                    <p className="text-emerald-600 font-semibold">{exp.company}</p>
-                    <p className="text-sm text-gray-600 mb-2 font-medium">{exp.duration}</p>
-                    <p className="text-gray-700">{exp.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Education */}
-            <div className="md:col-span-2">
-              <h3 className="font-bold text-gray-900 mb-4 text-lg flex items-center space-x-2">
-                <Brain className="h-5 w-5 text-indigo-600" />
-                <span>Education</span>
-              </h3>
-              <div className="space-y-4">
-                {extractedData.education.map((edu: any, index: number) => (
-                  <div key={index} className="bg-white/60 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-gray-200">
-                    <div className="flex justify-between items-start">
-                    <div>
-                        <h4 className="font-bold text-gray-900 text-lg">{edu.degree}</h4>
-                        <p className="text-gray-700 font-medium">{edu.school}</p>
-                        {edu.stream && <p className="text-sm text-indigo-600 font-medium">Stream: {edu.stream}</p>}
-                        {edu.cgpa && <p className="text-sm text-green-600 font-medium">CGPA: {edu.cgpa}</p>}
-                    </div>
-                      <span className="text-sm text-gray-600 font-semibold bg-gray-100 px-3 py-1 rounded-full">{edu.year}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Certifications */}
-            {extractedData.certifications && extractedData.certifications.length > 0 && (
-              <div className="md:col-span-2">
-                <h3 className="font-bold text-gray-900 mb-4 text-lg flex items-center space-x-2">
-                  <Award className="h-5 w-5 text-amber-600" />
-                  <span>Certifications</span>
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {extractedData.certifications.map((cert: string, index: number) => (
-                    <span 
-                      key={index}
-                      className="px-3 py-1.5 bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800 rounded-full text-sm font-semibold border border-amber-200 shadow-sm"
-                    >
-                      {cert}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Projects */}
-            {extractedData.projects && extractedData.projects.length > 0 && (
-              <div className="md:col-span-2">
-                <h3 className="font-bold text-gray-900 mb-4 text-lg flex items-center space-x-2">
-                  <Sparkles className="h-5 w-5 text-pink-600" />
-                  <span>Projects</span>
-                </h3>
-                <div className="space-y-6">
-                  {extractedData.projects.map((project: any, index: number) => (
-                    <div key={index} className="bg-white/60 backdrop-blur-sm border-l-4 border-pink-400 rounded-r-xl p-4 shadow-sm">
-                      <h4 className="font-bold text-gray-900 text-lg">{project.name}</h4>
-                      <p className="text-gray-700 mb-2">{project.description}</p>
-                      <div className="flex flex-wrap gap-1">
-                        {project.technologies.map((tech: string, techIndex: number) => (
-                          <span 
-                            key={techIndex}
-                            className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-medium"
-                          >
-                            {tech}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
-          <div className="mt-8 pt-6 border-t border-gray-200 flex justify-end">
-            <div className="flex space-x-4">
-              <Button
-                variant="outline"
-                onClick={handleDownloadAnalysis}
-                icon={Download}
-              >
-                Download Analysis
-              </Button>
-              <Button
-                onClick={handleFindMatches}
-                variant="secondary"
-                size="lg"
-                icon={Eye}
-              >
-                Find Job Matches
-              </Button>
+          {/* Experience Section */}
+          <div className="mt-12">
+            <h3 className="font-bold text-slate-900 text-xl flex items-center space-x-3 mb-8">
+              <div className="w-10 h-10 bg-emerald-100 rounded-2xl flex items-center justify-center">
+                <Award className="h-6 w-6 text-emerald-600" />
+              </div>
+              <span>Professional Experience</span>
+            </h3>
+            <div className="space-y-6">
+              {extractedData.experience.map((exp: any, index: number) => (
+                <div key={index} className="glass border-l-4 border-emerald-400 rounded-r-3xl p-8 shadow-medium hover:shadow-large transition-all duration-300 group">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-xl mb-1">{exp.title}</h4>
+                      <p className="text-emerald-600 font-bold text-lg">{exp.company}</p>
+                    </div>
+                    <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-2xl text-sm font-bold border border-emerald-200">
+                      {exp.duration}
+                    </span>
+                  </div>
+                  <p className="text-slate-700 leading-relaxed font-medium">{exp.description}</p>
+                </div>
+              ))}
             </div>
+          </div>
+
+          {/* Education Section */}
+          <div className="mt-12">
+            <h3 className="font-bold text-slate-900 text-xl flex items-center space-x-3 mb-8">
+              <div className="w-10 h-10 bg-amber-100 rounded-2xl flex items-center justify-center">
+                <Brain className="h-6 w-6 text-amber-600" />
+              </div>
+              <span>Education</span>
+            </h3>
+            <div className="grid md:grid-cols-2 gap-6">
+              {extractedData.education.map((edu: any, index: number) => (
+                <div key={index} className="glass rounded-3xl p-8 shadow-medium border border-slate-200/60 hover:shadow-large transition-all duration-300">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1">
+                      <h4 className="font-bold text-slate-900 text-lg mb-2">{edu.degree}</h4>
+                      <p className="text-slate-700 font-semibold text-base">{edu.school}</p>
+                      {edu.stream && <p className="text-amber-600 font-bold text-sm mt-1">Stream: {edu.stream}</p>}
+                      {edu.cgpa && <p className="text-emerald-600 font-bold text-sm mt-1">CGPA: {edu.cgpa}</p>}
+                    </div>
+                    <span className="px-3 py-1 bg-slate-100 text-slate-700 font-bold rounded-xl text-sm">
+                      {edu.year}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Certifications */}
+          {extractedData.certifications && extractedData.certifications.length > 0 && (
+            <div className="mt-12">
+              <h3 className="font-bold text-slate-900 text-xl flex items-center space-x-3 mb-8">
+                <div className="w-10 h-10 bg-rose-100 rounded-2xl flex items-center justify-center">
+                  <Award className="h-6 w-6 text-rose-600" />
+                </div>
+                <span>Certifications</span>
+              </h3>
+              <div className="flex flex-wrap gap-3">
+                {extractedData.certifications.map((cert: string, index: number) => (
+                  <span 
+                    key={index}
+                    className="px-4 py-2 bg-gradient-to-r from-rose-100 to-amber-100 text-rose-800 rounded-2xl text-sm font-bold border border-rose-200 shadow-soft hover:shadow-medium transition-all duration-300 hover:scale-105"
+                  >
+                    {cert}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Projects */}
+          {extractedData.projects && extractedData.projects.length > 0 && (
+            <div className="mt-12">
+              <h3 className="font-bold text-slate-900 text-xl flex items-center space-x-3 mb-8">
+                <div className="w-10 h-10 bg-violet-100 rounded-2xl flex items-center justify-center">
+                  <Sparkles className="h-6 w-6 text-violet-600" />
+                </div>
+                <span>Projects</span>
+              </h3>
+              <div className="space-y-6">
+                {extractedData.projects.map((project: any, index: number) => (
+                  <div key={index} className="glass border-l-4 border-violet-400 rounded-r-3xl p-8 shadow-medium hover:shadow-large transition-all duration-300">
+                    <h4 className="font-bold text-slate-900 text-xl mb-3">{project.name}</h4>
+                    <p className="text-slate-700 mb-4 leading-relaxed font-medium">{project.description}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {project.technologies.map((tech: string, techIndex: number) => (
+                        <span 
+                          key={techIndex}
+                          className="px-3 py-1 bg-violet-100 text-violet-700 rounded-xl text-xs font-bold border border-violet-200"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="mt-12 pt-8 border-t border-slate-200/60 flex justify-end space-x-6">
+            <Button
+              variant="outline"
+              onClick={handleDownloadAnalysis}
+              icon={Download}
+              size="lg"
+            >
+              Download Analysis
+            </Button>
+            <Button
+              onClick={handleFindMatches}
+              variant="secondary"
+              size="lg"
+              icon={Eye}
+              className="group"
+            >
+              <span>Find Job Matches</span>
+              <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
           </div>
         </Card>
       )}

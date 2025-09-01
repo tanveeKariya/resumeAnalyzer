@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Brain, Mail, Lock, User, AlertCircle, Sparkles } from 'lucide-react';
+import { Brain, Mail, Lock, User, AlertCircle, Sparkles, ArrowRight, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -52,57 +52,66 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-brand-50 to-violet-100 flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-200/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-200/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+      </div>
+
+      <div className="max-w-md w-full relative z-10">
         {/* Header */}
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center space-x-2 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-              <Brain className="h-6 w-6 text-white" />
+        <div className="text-center mb-10">
+          <Link to="/" className="inline-flex items-center space-x-3 mb-8 group">
+            <div className="w-14 h-14 gradient-brand rounded-2xl flex items-center justify-center shadow-large group-hover:shadow-glow transition-all duration-300">
+              <Brain className="h-8 w-8 text-white" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">CareerAI</span>
+            <div className="text-left">
+              <span className="text-3xl font-bold gradient-text">CareerAI</span>
+              <p className="text-sm text-slate-500 font-medium">Intelligent Hiring Platform</p>
+            </div>
           </Link>
-          <h2 className="text-4xl font-bold text-gray-900 mb-3">Welcome Back</h2>
-          <p className="text-gray-600 text-lg">Sign in to your account to continue your journey</p>
+          <h2 className="text-5xl font-bold text-slate-900 mb-4">Welcome Back</h2>
+          <p className="text-slate-600 text-lg font-medium">Sign in to continue your intelligent hiring journey</p>
         </div>
 
         {/* Demo Login Cards */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-2 gap-4 mb-10">
           <button
             onClick={() => handleDemoLogin('candidate')}
             disabled={loading}
-            className="p-6 bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 hover:border-blue-300 hover:bg-blue-50 transition-all disabled:opacity-50 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            className="group p-8 glass rounded-3xl border border-white/20 hover:border-brand-300 hover:bg-brand-50/50 transition-all disabled:opacity-50 shadow-medium hover:shadow-large transform hover:-translate-y-1"
           >
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <User className="h-6 w-6 text-white" />
+            <div className="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-medium group-hover:shadow-large group-hover:scale-110 transition-all duration-300">
+              <User className="h-8 w-8 text-white" />
             </div>
-            <p className="font-bold text-gray-900">Demo Candidate</p>
-            <p className="text-sm text-gray-600">Try as job seeker</p>
+            <p className="font-bold text-slate-900 text-lg mb-1">Demo Candidate</p>
+            <p className="text-sm text-slate-600 font-medium">Experience as job seeker</p>
           </button>
           
           <button
             onClick={() => handleDemoLogin('hr')}
             disabled={loading}
-            className="p-6 bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 hover:border-purple-300 hover:bg-purple-50 transition-all disabled:opacity-50 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            className="group p-8 glass rounded-3xl border border-white/20 hover:border-violet-300 hover:bg-violet-50/50 transition-all disabled:opacity-50 shadow-medium hover:shadow-large transform hover:-translate-y-1"
           >
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <Sparkles className="h-6 w-6 text-white" />
+            <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-medium group-hover:shadow-large group-hover:scale-110 transition-all duration-300">
+              <Sparkles className="h-8 w-8 text-white" />
             </div>
-            <p className="font-bold text-gray-900">Demo HR</p>
-            <p className="text-sm text-gray-600">Try as recruiter</p>
+            <p className="font-bold text-slate-900 text-lg mb-1">Demo HR</p>
+            <p className="text-sm text-slate-600 font-medium">Experience as recruiter</p>
           </button>
         </div>
 
         {/* Login Form */}
-        <Card className="p-8 backdrop-blur-sm bg-white/80 shadow-2xl border-white/20">
+        <Card glass padding="xl" shadow="large" className="border border-white/20">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center space-x-2">
-              <AlertCircle className="h-5 w-5 text-red-600" />
-              <span className="text-red-800 text-sm">{error}</span>
+            <div className="mb-8 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center space-x-3 animate-slide-down">
+              <AlertCircle className="h-6 w-6 text-rose-600" />
+              <span className="text-rose-800 font-medium">{error}</span>
             </div>
           )}
           
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
             <Input
               type="email"
               label="Email Address"
@@ -111,6 +120,7 @@ export default function LoginPage() {
               icon={Mail}
               placeholder="Enter your email"
               required
+              size="lg"
             />
 
             <Input
@@ -121,23 +131,24 @@ export default function LoginPage() {
               icon={Lock}
               placeholder="Enter your password"
               required
+              size="lg"
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-bold text-slate-700 mb-3">
                 Role
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value as 'hr' | 'candidate')}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none"
-                required
-              >
-                <option value="candidate">Job Candidate</option>
-                <option value="hr">HR / Recruiter</option>
-              </select>
+                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-slate-400" />
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as 'hr' | 'candidate')}
+                  className="input-field pl-12 text-lg appearance-none cursor-pointer"
+                  required
+                >
+                  <option value="candidate">Job Candidate</option>
+                  <option value="hr">HR / Recruiter</option>
+                </select>
               </div>
             </div>
 
@@ -145,20 +156,28 @@ export default function LoginPage() {
               type="submit" 
               disabled={loading}
               loading={loading}
-              className="w-full"
-              size="lg"
+              fullWidth
+              size="xl"
             >
               {loading ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
+          <div className="mt-8 text-center">
+            <p className="text-slate-600 font-medium">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-semibold">
-                Sign up
+              <Link to="/signup" className="text-brand-600 hover:text-brand-700 font-bold transition-colors">
+                Create Account
               </Link>
             </p>
+          </div>
+
+          {/* Security Badge */}
+          <div className="mt-8 pt-6 border-t border-slate-200/60">
+            <div className="flex items-center justify-center space-x-2 text-slate-500">
+              <Shield className="h-4 w-4" />
+              <span className="text-sm font-medium">Secured with enterprise-grade encryption</span>
+            </div>
           </div>
         </Card>
       </div>
