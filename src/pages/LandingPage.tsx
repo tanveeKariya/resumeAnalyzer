@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Brain, Users, Calendar, TrendingUp, CheckCircle, Star, Zap, Shield, Target, Award, ArrowRight, Play, Sparkles, Globe, Clock } from 'lucide-react';
+import { Brain, Users, Calendar, TrendingUp, CheckCircle, Star, Zap, Shield, Target, Award, ArrowRight, Play, Sparkles, Globe, Clock, Upload } from 'lucide-react';
 
 export default function LandingPage() {
   return (
