@@ -9,6 +9,7 @@ router.use(auth);
 
 // Resume routes
 router.post('/upload', resumeController.uploadResume);
+router.post('/analyze-text', resumeController.analyzeResumeText);
 router.get('/', resumeController.getUserResumes);
 router.get('/:resumeId', resumeController.getResumeAnalysis);
 router.get('/:resumeId/matches', resumeController.findJobMatches);

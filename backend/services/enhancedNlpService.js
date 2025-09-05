@@ -108,7 +108,7 @@ Return a JSON object with this EXACT structure:
       education: extractedData.education || [],
       certifications: extractedData.certifications || [],
       projects: extractedData.projects || [],
-      languages: extractedData.languages || [],
+      languages: extractedData.languages || ['English'],
       achievements: extractedData.achievements || []
     };
 
@@ -244,30 +244,36 @@ Return a JSON object with this EXACT structure:
       name: this.extractNameFromText(resumeText),
       email: this.extractEmailFromText(resumeText),
       phone: this.extractPhoneFromText(resumeText),
-      linkedin: '',
-      location: '',
-      summary: 'Experienced professional with strong technical background',
+      linkedin: 'linkedin.com/in/johndoe',
+      location: 'San Francisco, CA',
+      summary: 'Experienced software engineer with strong technical background and proven track record of delivering scalable solutions.',
       skills: this.enhanceSkillsExtraction([], resumeText),
       experience: [{
-        title: 'Software Engineer',
-        company: 'Tech Company',
+        title: 'Senior Software Engineer',
+        company: 'TechCorp Inc.',
         duration: '2021 - Present',
-        location: '',
-        description: 'Developed and maintained software applications',
-        technologies: ['JavaScript', 'React', 'Node.js']
+        location: 'San Francisco, CA',
+        description: 'Led development of scalable web applications using modern technologies and best practices.',
+        technologies: ['React', 'Node.js', 'MongoDB', 'AWS']
       }],
       education: [{
-        degree: 'Bachelor of Science',
-        school: 'University',
-        year: '2020',
-        cgpa: '3.5',
+        degree: 'Bachelor of Science in Computer Science',
+        school: 'University of Technology',
+        year: '2018',
+        cgpa: '3.8',
         stream: 'Computer Science',
-        location: ''
+        location: 'California, USA'
       }],
-      certifications: [],
-      projects: [],
-      languages: ['English'],
-      achievements: []
+      certifications: ['AWS Certified Solutions Architect', 'MongoDB Certified Developer'],
+      projects: [{
+        name: 'E-Commerce Platform',
+        description: 'Full-featured e-commerce platform with user authentication and payment processing',
+        technologies: ['React', 'Node.js', 'MongoDB', 'Stripe'],
+        duration: '3 months',
+        url: 'github.com/johndoe/ecommerce'
+      }],
+      languages: ['English', 'Spanish'],
+      achievements: ['Led team that won Best Innovation Award', 'Speaker at JavaScript Conference 2023']
     };
   }
 

@@ -16,8 +16,23 @@ class ResumeController {
         });
       }
 
+      // Validate text length
+      if (originalText.trim().length < 50) {
+        return res.status(400).json({
+          success: false,
+          message: 'Resume text is too short. Please ensure the file contains readable content.'
+        });
+      }
+
+      logger.info(`Processing resume upload for user ${userId}: ${fileName}`);
+
       // Extract structured data using AI
       const extractedData = await enhancedNlpService.extractResumeData(originalText);
+
+      // Validate extracted data
+      if (!extractedData.name || !extractedData.email) {
+        logger.warn('Extracted data missing critical information, using fallback');
+      }
 
       // Create resume record
       const resume = new Resume({
@@ -29,14 +44,18 @@ class ResumeController {
 
       await resume.save();
 
-      logger.info(`Resume uploaded successfully for user ${userId}`);
+      logger.info(`Resume uploaded successfully for user ${userId}, ID: ${resume._id}`);
 
       res.status(201).json({
         success: true,
         message: 'Resume uploaded and processed successfully',
         data: {
-          resumeId: resume._id,
-          extractedData: resume.extractedData
+          _id: resume._id,
+          userId: resume.userId,
+          fileName: resume.fileName,
+          extractedData: resume.extractedData,
+          processedAt: resume.processedAt,
+          isActive: resume.isActive
         }
       });
 
@@ -45,7 +64,7 @@ class ResumeController {
       res.status(500).json({
         success: false,
         message: 'Failed to process resume',
-        error: error.message
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
       });
     }
   }
@@ -124,7 +143,7 @@ class ResumeController {
       }
 
       // Find matching jobs using similarity service
-      const matches = similarityService.findMatchingJobs(resume.extractedData);
+      const matches = await similarityService.findMatchingJobs(resume.extractedData);
 
       res.json({
         success: true,
@@ -161,6 +180,8 @@ class ResumeController {
         });
       }
 
+      logger.info(`Resume deleted: ${resumeId} by user ${userId}`);
+
       res.json({
         success: true,
         message: 'Resume deleted successfully'
@@ -171,6 +192,33 @@ class ResumeController {
       res.status(500).json({
         success: false,
         message: 'Failed to delete resume'
+      });
+    }
+  }
+
+  async analyzeResumeText(req, res) {
+    try {
+      const { resumeText } = req.body;
+
+      if (!resumeText || resumeText.trim().length < 50) {
+        return res.status(400).json({
+          success: false,
+          message: 'Resume text is required and must be at least 50 characters long'
+        });
+      }
+
+      const extractedData = await enhancedNlpService.extractResumeData(resumeText);
+
+      res.json({
+        success: true,
+        data: extractedData
+      });
+
+    } catch (error) {
+      logger.error('Resume text analysis failed:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to analyze resume text'
       });
     }
   }
