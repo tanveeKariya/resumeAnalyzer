@@ -3,9 +3,11 @@ const logger = require('../utils/logger');
 
 const connectDB = async () => {
   try {
+    // Try to connect to MongoDB with a timeout
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000, // 5 second timeout
     });
 
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
@@ -26,8 +28,9 @@ const connectDB = async () => {
     });
 
   } catch (error) {
-    logger.error('Database connection failed:', error);
-    process.exit(1);
+    logger.warn('MongoDB connection failed, continuing without database:', error.message);
+    // Don't exit the process, allow server to start without MongoDB
+    // This is useful for development when MongoDB might not be running
   }
 };
 
