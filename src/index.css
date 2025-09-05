@@ -132,10 +132,6 @@
   .animate-slide-up {
     @apply animate-slide-up;
   }
-
-  .animate-scale-in {
-    @apply animate-scale-in;
-  }
 }
 
 /* Custom scrollbar for webkit browsers */
