@@ -2,13 +2,13 @@ import axios, { AxiosResponse } from 'axios';
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
-const DEEPSEEK_API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY;
-const DEEPSEEK_API_URL = import.meta.env.VITE_DEEPSEEK_API_URL;
+const DEEPSEEK_API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY || 'sk-57104a7f80b94a2eb28e88abe51203b6';
+const DEEPSEEK_API_URL = import.meta.env.VITE_DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions';
 
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -179,8 +179,9 @@ export class AuthService {
       
       return response.data;
     } catch (error: any) {
+      console.log('Backend registration failed, using demo mode:', error.message);
       // Fallback for demo mode
-      if (error.code === 'ERR_NETWORK' || error.response?.status >= 500) {
+      if (error.code === 'ERR_NETWORK' || error.response?.status >= 500 || !error.response) {
         return this.demoRegister(userData);
       }
       throw error;
@@ -202,8 +203,9 @@ export class AuthService {
       
       return response.data;
     } catch (error: any) {
+      console.log('Backend login failed, using demo mode:', error.message);
       // Fallback for demo mode
-      if (error.code === 'ERR_NETWORK' || error.response?.status >= 500) {
+      if (error.code === 'ERR_NETWORK' || error.response?.status >= 500 || !error.response) {
         return this.demoLogin(email, password, role);
       }
       throw error;

@@ -42,9 +42,11 @@ export default function LoginPage() {
       };
       
       const { email: demoEmail, password: demoPassword } = demoCredentials[demoRole];
+      console.log('Attempting demo login for:', demoRole);
       await login(demoEmail, demoPassword, demoRole);
       navigate('/dashboard');
     } catch (error: any) {
+      console.error('Demo login error:', error);
       setError(error.message || 'Demo login failed');
     } finally {
       setLoading(false);

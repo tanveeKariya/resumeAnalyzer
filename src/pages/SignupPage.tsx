@@ -39,11 +39,12 @@ export default function SignupPage() {
     setLoading(true);
     
     try {
+      console.log('Attempting registration for:', role);
       await register(email, password, name.trim(), role);
       navigate('/dashboard');
     } catch (error) {
+      console.error('Registration error:', error);
       setError('Registration failed. Please try again.');
-      console.error('Signup failed:', error);
     } finally {
       setLoading(false);
     }
