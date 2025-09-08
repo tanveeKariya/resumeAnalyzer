@@ -8,7 +8,7 @@ const DEEPSEEK_API_URL = import.meta.env.VITE_DEEPSEEK_API_URL || 'https://api.d
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -144,8 +144,59 @@ export interface Job {
     appliedAt: string;
     status: string;
     candidateBrief?: string;
+    testScore?: number;
+    testPassed?: boolean;
   }>;
   createdAt: string;
+  availableSlots?: string[];
+}
+
+export interface TestQuestion {
+  id: number;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  difficulty: string;
+  category: string;
+}
+
+export interface TestResult {
+  score: number;
+  passed: boolean;
+  correctAnswers: number;
+  totalQuestions: number;
+  passingScore: number;
+}
+
+export interface InterviewSlot {
+  id: string;
+  dateTime: string;
+  duration: number;
+  isAvailable: boolean;
+  recruiterId: string;
+}
+
+export interface Interview {
+  _id: string;
+  jobId: any;
+  candidateId: any;
+  recruiterId: any;
+  resumeId: string;
+  scheduledDateTime: string;
+  duration: number;
+  type: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  meetingLink?: string;
+  notes?: string;
+  candidateBrief?: string;
+  slotExpiresAt: string;
+  feedback?: {
+    rating: number;
+    comments: string;
+    strengths: string[];
+    weaknesses: string[];
+    recommendation: string;
+  };
 }
 
 // =====================
@@ -180,7 +231,6 @@ export class AuthService {
       return response.data;
     } catch (error: any) {
       console.log('Backend registration failed, using demo mode:', error.message);
-      // Fallback for demo mode
       if (error.code === 'ERR_NETWORK' || error.response?.status >= 500 || !error.response) {
         return this.demoRegister(userData);
       }
@@ -204,7 +254,6 @@ export class AuthService {
       return response.data;
     } catch (error: any) {
       console.log('Backend login failed, using demo mode:', error.message);
-      // Fallback for demo mode
       if (error.code === 'ERR_NETWORK' || error.response?.status >= 500 || !error.response) {
         return this.demoLogin(email, password, role);
       }
@@ -213,7 +262,6 @@ export class AuthService {
   }
 
   static async demoLogin(email: string, password: string, role: 'hr' | 'candidate'): Promise<AuthResponse> {
-    // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 800));
 
     const user: User = {
@@ -245,7 +293,6 @@ export class AuthService {
     password: string;
     role: 'hr' | 'candidate';
   }): Promise<AuthResponse> {
-    // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     const user: User = {
@@ -274,7 +321,6 @@ export class AuthService {
       const response = await api.get('/users/me');
       return response.data;
     } catch (error) {
-      // Fallback to stored user
       const storedUser = localStorage.getItem('career_ai_user');
       if (storedUser) {
         return { success: true, data: JSON.parse(storedUser) };
@@ -301,7 +347,7 @@ export class AuthService {
 }
 
 // =====================
-// Resume Extractor
+// Enhanced Resume Extractor
 // =====================
 export class ResumeExtractor {
   static async extractTextFromPDF(file: File): Promise<string> {
@@ -312,7 +358,6 @@ export class ResumeExtractor {
           const arrayBuffer = e.target?.result as ArrayBuffer;
           const uint8Array = new Uint8Array(arrayBuffer);
           
-          // Enhanced PDF text extraction
           let text = '';
           let inTextObject = false;
           let currentText = '';
@@ -321,7 +366,6 @@ export class ResumeExtractor {
             const char = uint8Array[i];
             const nextChar = uint8Array[i + 1];
             
-            // Look for text objects in PDF
             if (char === 66 && nextChar === 84) { // "BT" - Begin Text
               inTextObject = true;
               continue;
@@ -335,7 +379,6 @@ export class ResumeExtractor {
               continue;
             }
             
-            // Extract readable characters
             if (inTextObject && char >= 32 && char <= 126) {
               currentText += String.fromCharCode(char);
             } else if (!inTextObject && char >= 32 && char <= 126) {
@@ -343,15 +386,13 @@ export class ResumeExtractor {
             }
           }
           
-          // Clean up extracted text
           const cleanText = text
             .replace(/[^\x20-\x7E\n]/g, ' ')
             .replace(/\s+/g, ' ')
-            .replace(/\([^)]*\)/g, '') // Remove parentheses content
-            .replace(/\[[^\]]*\]/g, '') // Remove bracket content
+            .replace(/\([^)]*\)/g, '')
+            .replace(/\[[^\]]*\]/g, '')
             .trim();
           
-          // If no meaningful text extracted, provide sample
           if (cleanText.length < 50) {
             resolve(this.getSampleResumeText());
           } else {
@@ -371,8 +412,6 @@ export class ResumeExtractor {
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = () => {
-        // For demo purposes, return sample text
-        // In production, you'd use mammoth.js
         resolve(this.getSampleResumeText());
       };
       reader.onerror = () => resolve(this.getSampleResumeText());
@@ -595,35 +634,14 @@ Return a JSON object with this EXACT structure:
 
   static enhanceSkillsExtraction(extractedSkills: string[], resumeText: string): string[] {
     const comprehensiveSkills = [
-      // Programming Languages
-      'JavaScript', 'Python', 'Java', 'C++', 'C#', 'C', 'TypeScript', 'PHP', 'Ruby', 'Go', 'Rust', 'Swift', 'Kotlin', 'Scala', 'R', 'MATLAB', 'Perl', 'Shell Scripting', 'PowerShell',
-      
-      // Frontend Technologies
-      'React', 'Angular', 'Vue.js', 'HTML', 'CSS', 'SCSS', 'SASS', 'Bootstrap', 'Tailwind CSS', 'Material-UI', 'Ant Design', 'Chakra UI', 'jQuery', 'Redux', 'MobX', 'Next.js', 'Nuxt.js', 'Gatsby', 'Svelte',
-      
-      // Backend Technologies
-      'Node.js', 'Express.js', 'Django', 'Flask', 'FastAPI', 'Spring Boot', 'ASP.NET', 'Laravel', 'Ruby on Rails', 'Gin', 'Echo', 'Fiber',
-      
-      // Databases
-      'MongoDB', 'PostgreSQL', 'MySQL', 'SQLite', 'Redis', 'Cassandra', 'DynamoDB', 'Firebase', 'Supabase', 'Oracle', 'SQL Server', 'MariaDB',
-      
-      // Cloud & DevOps
-      'AWS', 'Azure', 'Google Cloud', 'Docker', 'Kubernetes', 'Jenkins', 'GitLab CI', 'GitHub Actions', 'Terraform', 'Ansible', 'Chef', 'Puppet',
-      
-      // Tools & Platforms
-      'Git', 'GitHub', 'GitLab', 'Bitbucket', 'Jira', 'Confluence', 'Slack', 'Trello', 'Asana', 'Notion',
-      
-      // Testing
-      'Jest', 'Mocha', 'Chai', 'Cypress', 'Selenium', 'Puppeteer', 'Playwright', 'JUnit', 'PyTest', 'Postman',
-      
-      // Mobile Development
-      'React Native', 'Flutter', 'Ionic', 'Xamarin', 'Android', 'iOS', 'Swift UI', 'Jetpack Compose',
-      
-      // Data Science & AI
-      'Machine Learning', 'Deep Learning', 'TensorFlow', 'PyTorch', 'Scikit-learn', 'Pandas', 'NumPy', 'Matplotlib', 'Seaborn', 'Jupyter', 'Tableau', 'Power BI', 'Apache Spark', 'Hadoop',
-      
-      // Methodologies
-      'Agile', 'Scrum', 'Kanban', 'DevOps', 'CI/CD', 'TDD', 'BDD', 'Microservices', 'REST API', 'GraphQL', 'gRPC'
+      'JavaScript', 'Python', 'Java', 'C++', 'C#', 'C', 'TypeScript', 'PHP', 'Ruby', 'Go', 'Rust', 'Swift', 'Kotlin', 'Scala', 'R', 'MATLAB',
+      'React', 'Angular', 'Vue.js', 'HTML', 'CSS', 'SCSS', 'SASS', 'Bootstrap', 'Tailwind CSS', 'Material-UI', 'jQuery', 'Redux', 'Next.js',
+      'Node.js', 'Express.js', 'Django', 'Flask', 'FastAPI', 'Spring Boot', 'ASP.NET', 'Laravel', 'Ruby on Rails',
+      'MongoDB', 'PostgreSQL', 'MySQL', 'SQLite', 'Redis', 'Cassandra', 'DynamoDB', 'Firebase', 'Supabase',
+      'AWS', 'Azure', 'Google Cloud', 'Docker', 'Kubernetes', 'Jenkins', 'GitLab CI', 'GitHub Actions', 'Terraform',
+      'Git', 'GitHub', 'GitLab', 'Jira', 'Postman', 'VS Code', 'Jest', 'Cypress', 'Selenium',
+      'React Native', 'Flutter', 'Android', 'iOS', 'Machine Learning', 'Deep Learning', 'TensorFlow', 'PyTorch',
+      'Agile', 'Scrum', 'DevOps', 'CI/CD', 'REST API', 'GraphQL', 'Microservices'
     ];
 
     const foundSkills = new Set(extractedSkills);
@@ -654,7 +672,6 @@ Return a JSON object with this EXACT structure:
       'PostgreSQL': ['postgres', 'psql'],
       'Machine Learning': ['ml', 'machine learning'],
       'Deep Learning': ['dl', 'deep learning'],
-      'Artificial Intelligence': ['ai', 'artificial intelligence'],
       'REST API': ['rest', 'restful', 'rest api'],
       'GraphQL': ['graph ql', 'graphql']
     };
@@ -761,6 +778,163 @@ Return a JSON object with this EXACT structure:
 }
 
 // =====================
+// Test Service
+// =====================
+export class TestService {
+  static async generateQuestions(jobTitle: string): Promise<TestQuestion[]> {
+    const prompt = `Generate 10 technical assessment questions for a ${jobTitle} position. 
+    
+    IMPORTANT: Return ONLY a JSON array with no additional text.
+    
+    Create questions that are:
+    - 3 easy level questions (basic concepts)
+    - 5 moderate level questions (practical application)
+    - 2 advanced level questions (problem-solving)
+    
+    Each question should have 4 multiple choice options with only one correct answer.
+    
+    Return a JSON array with this exact structure:
+    [
+      {
+        "id": 1,
+        "question": "Question text here?",
+        "options": ["Option A", "Option B", "Option C", "Option D"],
+        "correctAnswer": 0,
+        "difficulty": "easy",
+        "category": "technical"
+      }
+    ]
+    
+    Focus on relevant technical skills for ${jobTitle}.`;
+
+    try {
+      const response = await fetch(DEEPSEEK_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+          max_tokens: 3000,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`DeepSeek API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content;
+      const cleanedContent = this.cleanJsonArrayResponse(content);
+      return JSON.parse(cleanedContent);
+    } catch (error) {
+      console.error('Question generation failed:', error);
+      return this.getFallbackQuestions(jobTitle);
+    }
+  }
+
+  static cleanJsonArrayResponse(response: string): string {
+    const jsonStart = response.indexOf('[');
+    const jsonEnd = response.lastIndexOf(']');
+    
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      return response.substring(jsonStart, jsonEnd + 1);
+    }
+    
+    return response;
+  }
+
+  static getFallbackQuestions(jobTitle: string): TestQuestion[] {
+    const baseQuestions = [
+      {
+        id: 1,
+        question: "What is the primary purpose of React hooks?",
+        options: [
+          "To manage state in functional components",
+          "To create class components",
+          "To handle routing",
+          "To manage CSS styles"
+        ],
+        correctAnswer: 0,
+        difficulty: "easy",
+        category: "react"
+      },
+      {
+        id: 2,
+        question: "Which HTTP method is typically used to create a new resource?",
+        options: ["GET", "POST", "PUT", "DELETE"],
+        correctAnswer: 1,
+        difficulty: "easy",
+        category: "web"
+      },
+      {
+        id: 3,
+        question: "What does API stand for?",
+        options: [
+          "Application Programming Interface",
+          "Advanced Programming Integration",
+          "Automated Program Interaction",
+          "Application Process Integration"
+        ],
+        correctAnswer: 0,
+        difficulty: "easy",
+        category: "concepts"
+      },
+      {
+        id: 4,
+        question: "In JavaScript, what does the 'this' keyword refer to?",
+        options: [
+          "The current function",
+          "The global object",
+          "The object that owns the method",
+          "The parent element"
+        ],
+        correctAnswer: 2,
+        difficulty: "moderate",
+        category: "javascript"
+      },
+      {
+        id: 5,
+        question: "What is the purpose of version control systems like Git?",
+        options: [
+          "To compile code",
+          "To track changes in source code",
+          "To run tests",
+          "To deploy applications"
+        ],
+        correctAnswer: 1,
+        difficulty: "easy",
+        category: "tools"
+      }
+    ];
+
+    return baseQuestions.slice(0, 10);
+  }
+
+  static async submitTest(questions: TestQuestion[], answers: number[]): Promise<TestResult> {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const correctAnswers = answers.reduce((count, answer, index) => {
+      return answer === questions[index]?.correctAnswer ? count + 1 : count;
+    }, 0);
+    
+    const score = Math.round((correctAnswers / questions.length) * 100);
+    const passed = score >= 70;
+    
+    return {
+      score,
+      passed,
+      correctAnswers,
+      totalQuestions: questions.length,
+      passingScore: 70
+    };
+  }
+}
+
+// =====================
 // Resume Analysis Service
 // =====================
 export class ResumeAnalysisService {
@@ -769,11 +943,9 @@ export class ResumeAnalysisService {
     fileName: string;
   }): Promise<{ success: boolean; data: ResumeAnalysis }> {
     try {
-      // Try backend first
       const response = await api.post('/resumes/upload', resumeData);
       return response.data;
     } catch (error: any) {
-      // Fallback to local processing
       if (error.code === 'ERR_NETWORK' || error.response?.status >= 500) {
         return this.processResumeLocally(resumeData);
       }
@@ -785,7 +957,6 @@ export class ResumeAnalysisService {
     originalText: string;
     fileName: string;
   }): Promise<{ success: boolean; data: ResumeAnalysis }> {
-    // Simulate processing delay
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     const extractedData = await EnhancedNLPService.extractResumeData(resumeData.originalText);
@@ -800,7 +971,6 @@ export class ResumeAnalysisService {
       isActive: true
     };
 
-    // Store locally
     const stored = localStorage.getItem('career_ai_resumes') || '[]';
     const resumes = JSON.parse(stored);
     resumes.push(resume);
@@ -814,26 +984,9 @@ export class ResumeAnalysisService {
       const response = await api.get('/resumes');
       return response.data;
     } catch (error) {
-      // Fallback to local storage
       const stored = localStorage.getItem('career_ai_resumes') || '[]';
       const resumes = JSON.parse(stored);
       return { success: true, data: resumes };
-    }
-  }
-
-  static async getResumeAnalysis(resumeId: string): Promise<{ success: boolean; data: ResumeAnalysis }> {
-    try {
-      const response = await api.get(`/resumes/${resumeId}`);
-      return response.data;
-    } catch (error) {
-      // Fallback to local storage
-      const stored = localStorage.getItem('career_ai_resumes') || '[]';
-      const resumes = JSON.parse(stored);
-      const resume = resumes.find((r: ResumeAnalysis) => r._id === resumeId);
-      if (resume) {
-        return { success: true, data: resume };
-      }
-      throw new Error('Resume not found');
     }
   }
 
@@ -842,7 +995,6 @@ export class ResumeAnalysisService {
       const response = await api.get(`/resumes/${resumeId}/matches`);
       return response.data;
     } catch (error) {
-      // Generate mock job matches
       const mockMatches = this.generateMockJobMatches();
       const resumeResponse = await this.getResumeAnalysis(resumeId);
       return {
@@ -852,6 +1004,21 @@ export class ResumeAnalysisService {
           resumeData: resumeResponse.data.extractedData
         }
       };
+    }
+  }
+
+  static async getResumeAnalysis(resumeId: string): Promise<{ success: boolean; data: ResumeAnalysis }> {
+    try {
+      const response = await api.get(`/resumes/${resumeId}`);
+      return response.data;
+    } catch (error) {
+      const stored = localStorage.getItem('career_ai_resumes') || '[]';
+      const resumes = JSON.parse(stored);
+      const resume = resumes.find((r: ResumeAnalysis) => r._id === resumeId);
+      if (resume) {
+        return { success: true, data: resume };
+      }
+      throw new Error('Resume not found');
     }
   }
 
@@ -875,7 +1042,12 @@ export class ResumeAnalysisService {
         description: 'We are looking for a Senior Frontend Developer with expertise in React and modern JavaScript frameworks.',
         postedBy: 'hr-1',
         isActive: true,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        availableSlots: [
+          new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+          new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
+        ]
       },
       {
         _id: '2',
@@ -895,43 +1067,13 @@ export class ResumeAnalysisService {
         description: 'Join our team as a Full Stack Developer working with modern technologies.',
         postedBy: 'hr-2',
         isActive: true,
-        createdAt: new Date().toISOString()
-      },
-      {
-        _id: '3',
-        title: 'React Developer',
-        company: 'WebAgency Pro',
-        location: 'New York, NY',
-        matchScore: 85,
-        skillsMatch: 88,
-        experienceMatch: 82,
-        educationMatch: 85,
-        salary: { min: 90000, max: 120000, currency: 'USD' },
-        type: 'Full-time',
-        requirements: {
-          skills: ['React', 'Redux', 'JavaScript', 'CSS'],
-          experience: { min: 2, max: 4, level: 'mid' }
-        },
-        description: 'Looking for a React Developer to build amazing user interfaces.',
-        postedBy: 'hr-3',
-        isActive: true,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        availableSlots: [
+          new Date(Date.now() + 36 * 60 * 60 * 1000).toISOString(),
+          new Date(Date.now() + 60 * 60 * 60 * 1000).toISOString()
+        ]
       }
     ];
-  }
-
-  static async deleteResume(resumeId: string): Promise<{ success: boolean; message: string }> {
-    try {
-      const response = await api.delete(`/resumes/${resumeId}`);
-      return response.data;
-    } catch (error) {
-      // Remove from local storage
-      const stored = localStorage.getItem('career_ai_resumes') || '[]';
-      const resumes = JSON.parse(stored);
-      const filtered = resumes.filter((r: ResumeAnalysis) => r._id !== resumeId);
-      localStorage.setItem('career_ai_resumes', JSON.stringify(filtered));
-      return { success: true, message: 'Resume deleted successfully' };
-    }
   }
 }
 
@@ -944,7 +1086,6 @@ export class JobService {
       const response = await api.post('/jobs', jobData);
       return response.data;
     } catch (error: any) {
-      // Fallback to local storage
       if (error.code === 'ERR_NETWORK' || error.response?.status >= 500) {
         const job: Job = {
           _id: Date.now().toString(),
@@ -952,7 +1093,8 @@ export class JobService {
           postedBy: 'demo-hr',
           isActive: true,
           applicants: [],
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          availableSlots: this.generateDefaultSlots()
         };
 
         const stored = localStorage.getItem('career_ai_jobs') || '[]';
@@ -971,7 +1113,6 @@ export class JobService {
       const response = await api.get('/jobs', { params });
       return response.data;
     } catch (error) {
-      // Fallback to mock jobs
       const mockJobs = this.getMockJobs();
       return {
         success: true,
@@ -997,7 +1138,7 @@ export class JobService {
         _id: '1',
         title: 'Senior Frontend Developer',
         company: 'TechCorp Inc.',
-        description: 'We are looking for a Senior Frontend Developer with expertise in React and modern JavaScript frameworks. You will be responsible for building scalable user interfaces and working closely with our design and backend teams.',
+        description: 'We are looking for a Senior Frontend Developer with expertise in React and modern JavaScript frameworks.',
         requirements: {
           skills: ['React', 'JavaScript', 'TypeScript', 'Node.js', 'CSS'],
           experience: { min: 3, max: 7, level: 'senior' },
@@ -1009,13 +1150,14 @@ export class JobService {
         postedBy: 'hr-1',
         isActive: true,
         applicants: [],
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        availableSlots: this.generateDefaultSlots()
       },
       {
         _id: '2',
         title: 'Full Stack Developer',
         company: 'StartupXYZ',
-        description: 'Join our team as a Full Stack Developer working with modern technologies. You will work on both frontend and backend development, contributing to our growing platform.',
+        description: 'Join our team as a Full Stack Developer working with modern technologies.',
         requirements: {
           skills: ['React', 'Node.js', 'MongoDB', 'Python', 'Express.js'],
           experience: { min: 2, max: 5, level: 'mid' },
@@ -1027,56 +1169,58 @@ export class JobService {
         postedBy: 'hr-2',
         isActive: true,
         applicants: [],
-        createdAt: new Date().toISOString()
-      },
-      {
-        _id: '3',
-        title: 'React Developer',
-        company: 'WebAgency Pro',
-        description: 'Looking for a React Developer to build amazing user interfaces. You will work on various client projects and contribute to our component library.',
-        requirements: {
-          skills: ['React', 'Redux', 'JavaScript', 'CSS', 'HTML'],
-          experience: { min: 2, max: 4, level: 'mid' },
-          education: { degree: 'Bachelor', stream: ['Computer Science', 'Web Development'] }
-        },
-        location: 'New York, NY',
-        salary: { min: 90000, max: 120000, currency: 'USD' },
-        type: 'full-time',
-        postedBy: 'hr-3',
-        isActive: true,
-        applicants: [],
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        availableSlots: this.generateDefaultSlots()
       }
     ];
 
     return [...localJobs, ...defaultJobs];
   }
 
-  static async getJobById(jobId: string): Promise<{ success: boolean; data: Job }> {
-    try {
-      const response = await api.get(`/jobs/${jobId}`);
-      return response.data;
-    } catch (error) {
-      const jobs = this.getMockJobs();
-      const job = jobs.find(j => j._id === jobId);
-      if (job) {
-        return { success: true, data: job };
+  static generateDefaultSlots(): string[] {
+    const slots = [];
+    const now = new Date();
+    
+    for (let day = 1; day <= 7; day++) {
+      const date = new Date(now);
+      date.setDate(now.getDate() + day);
+      
+      if (date.getDay() !== 0 && date.getDay() !== 6) { // Skip weekends
+        // Morning slots
+        for (let hour = 9; hour < 12; hour++) {
+          const slot = new Date(date);
+          slot.setHours(hour, 0, 0, 0);
+          slots.push(slot.toISOString());
+        }
+        
+        // Afternoon slots
+        for (let hour = 14; hour < 17; hour++) {
+          const slot = new Date(date);
+          slot.setHours(hour, 0, 0, 0);
+          slots.push(slot.toISOString());
+        }
       }
-      throw new Error('Job not found');
     }
+    
+    return slots;
   }
 
-  static async applyToJob(jobId: string, resumeId: string): Promise<{ success: boolean; data: any }> {
+  static async applyToJob(jobId: string, resumeId: string, testResult: TestResult): Promise<{ success: boolean; data: any }> {
     try {
-      const response = await api.post(`/jobs/${jobId}/apply`, { resumeId });
+      const response = await api.post(`/jobs/${jobId}/apply`, { 
+        resumeId, 
+        testScore: testResult.score,
+        testPassed: testResult.passed 
+      });
       return response.data;
     } catch (error) {
-      // Mock successful application
       return {
         success: true,
         data: {
           matchScore: Math.floor(Math.random() * 20) + 80,
-          message: 'Application submitted successfully'
+          message: 'Application submitted successfully',
+          testScore: testResult.score,
+          testPassed: testResult.passed
         }
       };
     }
@@ -1087,7 +1231,6 @@ export class JobService {
       const response = await api.get(`/jobs/${jobId}/applicants`);
       return response.data;
     } catch (error) {
-      // Return mock applicants
       return {
         success: true,
         data: {
@@ -1095,6 +1238,23 @@ export class JobService {
           applicants: []
         }
       };
+    }
+  }
+
+  static async getAvailableSlots(jobId: string): Promise<{ success: boolean; data: InterviewSlot[] }> {
+    try {
+      const response = await api.get(`/jobs/${jobId}/slots`);
+      return response.data;
+    } catch (error) {
+      const slots = this.generateDefaultSlots().map((slot, index) => ({
+        id: `slot-${index}`,
+        dateTime: slot,
+        duration: 60,
+        isAvailable: true,
+        recruiterId: 'demo-hr'
+      }));
+      
+      return { success: true, data: slots };
     }
   }
 }
@@ -1108,26 +1268,55 @@ export class InterviewService {
       const response = await api.post('/interviews/schedule', interviewData);
       return response.data;
     } catch (error) {
-      // Mock successful scheduling
       const interview = {
         _id: Date.now().toString(),
         ...interviewData,
         status: 'pending',
         slotExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        meetingLink: `https://meet.google.com/abc-defg-hij`
       };
 
       return { success: true, data: interview };
     }
   }
 
-  static async getUserInterviews(params?: any): Promise<{ success: boolean; data: any[] }> {
+  static async requestInterviewSlot(jobId: string, slotId: string, resumeId: string): Promise<{ success: boolean; data: any }> {
+    try {
+      const response = await api.post(`/interviews/request-slot`, {
+        jobId,
+        slotId,
+        resumeId
+      });
+      return response.data;
+    } catch (error) {
+      const interview = {
+        _id: Date.now().toString(),
+        jobId,
+        slotId,
+        resumeId,
+        status: 'pending',
+        requestedAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      };
+
+      const stored = localStorage.getItem('career_ai_interview_requests') || '[]';
+      const requests = JSON.parse(stored);
+      requests.push(interview);
+      localStorage.setItem('career_ai_interview_requests', JSON.stringify(requests));
+
+      return { success: true, data: interview };
+    }
+  }
+
+  static async getUserInterviews(params?: any): Promise<{ success: boolean; data: Interview[] }> {
     try {
       const response = await api.get('/interviews', { params });
       return response.data;
     } catch (error) {
-      // Return mock interviews
-      return { success: true, data: [] };
+      const stored = localStorage.getItem('career_ai_interviews') || '[]';
+      const interviews = JSON.parse(stored);
+      return { success: true, data: interviews };
     }
   }
 
@@ -1140,6 +1329,25 @@ export class InterviewService {
     }
   }
 
+  static async confirmInterviewSlot(interviewId: string): Promise<{ success: boolean; data: any }> {
+    try {
+      const response = await api.patch(`/interviews/${interviewId}/confirm`);
+      return response.data;
+    } catch (error) {
+      const stored = localStorage.getItem('career_ai_interviews') || '[]';
+      const interviews = JSON.parse(stored);
+      const interview = interviews.find((i: any) => i._id === interviewId);
+      
+      if (interview) {
+        interview.status = 'confirmed';
+        interview.meetingLink = `https://meet.google.com/abc-defg-hij`;
+        localStorage.setItem('career_ai_interviews', JSON.stringify(interviews));
+      }
+
+      return { success: true, data: { message: 'Interview confirmed successfully' } };
+    }
+  }
+
   static async submitFeedback(interviewId: string, feedbackData: any): Promise<{ success: boolean; data: any }> {
     try {
       const response = await api.post(`/interviews/${interviewId}/feedback`, feedbackData);
@@ -1148,23 +1356,40 @@ export class InterviewService {
       return { success: true, data: { message: 'Feedback submitted successfully' } };
     }
   }
+}
 
-  static async endMeeting(interviewId: string): Promise<{ success: boolean; data: any }> {
-    try {
-      const response = await api.post(`/interviews/${interviewId}/end-meeting`);
-      return response.data;
-    } catch (error) {
-      return { success: true, data: { requiresFeedback: true } };
-    }
+// =====================
+// Storage Service
+// =====================
+export class StorageService {
+  static getStatistics() {
+    const resumes = JSON.parse(localStorage.getItem('career_ai_resumes') || '[]');
+    const interviews = JSON.parse(localStorage.getItem('career_ai_interviews') || '[]');
+    const jobs = JSON.parse(localStorage.getItem('career_ai_jobs') || '[]');
+
+    return {
+      totalResumes: resumes.length,
+      totalMatches: jobs.length * 2,
+      totalInterviews: interviews.length,
+      completedInterviews: interviews.filter((i: any) => i.status === 'completed').length,
+      pendingInterviews: interviews.filter((i: any) => i.status === 'pending').length,
+      confirmedInterviews: interviews.filter((i: any) => i.status === 'confirmed').length,
+      totalFeedbacks: interviews.filter((i: any) => i.feedback).length,
+      averageMatchScore: 85
+    };
   }
 
-  static async getCandidateFeedbackHistory(candidateId: string): Promise<{ success: boolean; data: any[] }> {
-    try {
-      const response = await api.get(`/interviews/candidate/${candidateId}/feedback-history`);
-      return response.data;
-    } catch (error) {
-      return { success: true, data: [] };
-    }
+  static saveTestResult(jobId: string, testResult: TestResult): void {
+    const stored = localStorage.getItem('career_ai_test_results') || '{}';
+    const results = JSON.parse(stored);
+    results[jobId] = testResult;
+    localStorage.setItem('career_ai_test_results', JSON.stringify(results));
+  }
+
+  static getTestResult(jobId: string): TestResult | null {
+    const stored = localStorage.getItem('career_ai_test_results') || '{}';
+    const results = JSON.parse(stored);
+    return results[jobId] || null;
   }
 }
 

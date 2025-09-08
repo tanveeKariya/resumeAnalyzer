@@ -3,7 +3,6 @@ import { ResumeExtractor, ResumeAnalysisService, EnhancedNLPService } from './ap
 export class ResumeService {
   static async uploadAndAnalyze(file: File) {
     try {
-      // Validate file
       if (!file) {
         throw new Error('No file provided');
       }
@@ -22,7 +21,6 @@ export class ResumeService {
         throw new Error('Invalid file type. Please upload a PDF or DOCX file.');
       }
 
-      // Extract text from file
       console.log('Extracting text from file:', file.name);
       const resumeText = await ResumeExtractor.getResumeText(file);
       
@@ -32,14 +30,13 @@ export class ResumeService {
 
       console.log('Text extracted successfully, length:', resumeText.length);
 
-      // Upload to backend for AI analysis
       const response = await ResumeAnalysisService.uploadResume({
         originalText: resumeText,
         fileName: file.name
       });
 
       if (!response.success) {
-        throw new Error(response.message || 'Failed to upload resume');
+        throw new Error('Failed to upload resume');
       }
 
       console.log('Resume analysis completed successfully');
@@ -70,16 +67,6 @@ export class ResumeService {
       return response.data;
     } catch (error) {
       console.error('Job matching failed:', error);
-      throw error;
-    }
-  }
-
-  static async deleteResume(resumeId: string) {
-    try {
-      const response = await ResumeAnalysisService.deleteResume(resumeId);
-      return response.data;
-    } catch (error) {
-      console.error('Resume deletion failed:', error);
       throw error;
     }
   }

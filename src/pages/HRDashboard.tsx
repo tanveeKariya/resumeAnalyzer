@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
-import { Calendar, Users, Clock, CheckCircle, Plus, Filter, Eye, MessageSquare, Video, Award, Brain, Zap } from 'lucide-react';
+import { Calendar, Users, Clock, CheckCircle, Plus, Eye, Video, Award, Brain, Zap, Target, MapPin, DollarSign } from 'lucide-react';
 import { JobService, InterviewService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import FeedbackModal from '../components/FeedbackModal';
-import { GoogleMeetService } from '../services/googleMeetService';
+import Input from '../components/ui/Input';
 
 interface JobWithApplicants {
   _id: string;
   title: string;
   company: string;
   location: string;
+  salary: {
+    min: number;
+    max: number;
+    currency: string;
+  };
   applicants: Array<{
     userId: {
       _id: string;
@@ -28,22 +32,22 @@ interface JobWithApplicants {
     appliedAt: string;
     status: string;
     candidateBrief?: string;
+    testScore?: number;
+    testPassed?: boolean;
   }>;
+  availableSlots?: string[];
 }
 
 export default function HRDashboard() {
   const { user } = useAuth();
-  const [view, setView] = useState<'jobs' | 'applicants' | 'interviews'>('jobs');
+  const [view, setView] = useState<'jobs' | 'applicants' | 'interviews' | 'slots'>('jobs');
   const [jobs, setJobs] = useState<JobWithApplicants[]>([]);
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
   const [interviews, setInterviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateJob, setShowCreateJob] = useState(false);
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [selectedInterview, setSelectedInterview] = useState<any>(null);
-  const [candidateFeedbackHistory, setCandidateFeedbackHistory] = useState<any[]>([]);
+  const [showSlotsModal, setShowSlotsModal] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
 
   const [newJob, setNewJob] = useState({
     title: '',
@@ -57,16 +61,8 @@ export default function HRDashboard() {
     experienceLevel: 'mid',
     salaryMin: 50000,
     salaryMax: 100000,
-    degree: '',
+    degree: 'Bachelor',
     stream: ''
-  });
-
-  const [newInterview, setNewInterview] = useState({
-    scheduledDateTime: '',
-    duration: 60,
-    type: 'technical',
-    meetingLink: '',
-    notes: ''
   });
 
   React.useEffect(() => {
@@ -96,22 +92,6 @@ export default function HRDashboard() {
       console.error('Failed to load jobs:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadJobApplicants = async (jobId: string) => {
-    try {
-      const response = await JobService.getJobApplicants(jobId);
-      if (response.success) {
-        const updatedJobs = jobs.map(job => 
-          job._id === jobId 
-            ? { ...job, applicants: response.data.applicants }
-            : job
-        );
-        setJobs(updatedJobs);
-      }
-    } catch (error) {
-      console.error('Failed to load applicants:', error);
     }
   };
 
@@ -170,7 +150,7 @@ export default function HRDashboard() {
           experienceLevel: 'mid',
           salaryMin: 50000,
           salaryMax: 100000,
-          degree: '',
+          degree: 'Bachelor',
           stream: ''
         });
         alert('Job posted successfully!');
@@ -182,227 +162,175 @@ export default function HRDashboard() {
     }
   };
 
-  const scheduleInterview = async () => {
-    if (!selectedCandidate || !selectedJob) return;
+  const manageSlots = (jobId: string) => {
+    const job = jobs.find(j => j._id === jobId);
+    if (job) {
+      setSelectedJob(jobId);
+      setAvailableSlots(job.availableSlots || []);
+      setShowSlotsModal(true);
+    }
+  };
 
-    try {
-      setLoading(true);
-      
-      // Create Google Meet link
-      const meetingLink = await GoogleMeetService.createMeetingLink(
-        `Interview: ${jobs.find(j => j._id === selectedJob)?.title} - ${selectedCandidate.userId.name}`,
-        newInterview.scheduledDateTime,
-        newInterview.duration,
-        [selectedCandidate.userId.email, user?.email || '']
+  const addTimeSlot = () => {
+    const newSlot = new Date();
+    newSlot.setDate(newSlot.getDate() + 1);
+    newSlot.setHours(10, 0, 0, 0);
+    setAvailableSlots([...availableSlots, newSlot.toISOString()]);
+  };
+
+  const removeTimeSlot = (index: number) => {
+    setAvailableSlots(availableSlots.filter((_, i) => i !== index));
+  };
+
+  const saveSlots = () => {
+    if (selectedJob) {
+      const updatedJobs = jobs.map(job => 
+        job._id === selectedJob 
+          ? { ...job, availableSlots }
+          : job
       );
+      setJobs(updatedJobs);
       
-      const interviewData = {
-        jobId: selectedJob,
-        candidateId: selectedCandidate.userId._id,
-        resumeId: selectedCandidate.resumeId._id,
-        scheduledDateTime: newInterview.scheduledDateTime,
-        duration: newInterview.duration,
-        type: newInterview.type,
-        meetingLink,
-        notes: newInterview.notes
-      };
-
-      const response = await InterviewService.scheduleInterview(interviewData);
-      if (response.success) {
-        setInterviews([response.data, ...interviews]);
-        setShowScheduleModal(false);
-        setSelectedCandidate(null);
-        setNewInterview({
-          scheduledDateTime: '',
-          duration: 60,
-          type: 'technical',
-          meetingLink: '',
-          notes: ''
-        });
-        alert('Interview scheduled successfully!');
+      // Save to localStorage
+      const stored = localStorage.getItem('career_ai_jobs') || '[]';
+      const allJobs = JSON.parse(stored);
+      const jobIndex = allJobs.findIndex((j: any) => j._id === selectedJob);
+      if (jobIndex !== -1) {
+        allJobs[jobIndex].availableSlots = availableSlots;
+        localStorage.setItem('career_ai_jobs', JSON.stringify(allJobs));
       }
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to schedule interview');
-    } finally {
-      setLoading(false);
+      
+      setShowSlotsModal(false);
+      alert('Interview slots updated successfully!');
     }
   };
 
-  const endMeeting = async (interviewId: string) => {
-    try {
-      const response = await InterviewService.endMeeting(interviewId);
-      if (response.success) {
-        const interview = interviews.find(i => i._id === interviewId);
-        setSelectedInterview(interview);
-        setShowFeedbackModal(true);
-        await loadInterviews();
-      }
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to end meeting');
-    }
-  };
-
-  const submitFeedback = async (feedbackData: any) => {
-    if (!selectedInterview) return;
-    
-    try {
-      const response = await InterviewService.submitFeedback(selectedInterview._id, feedbackData);
-      if (response.success) {
-        await loadInterviews();
-        alert('Feedback submitted successfully!');
-      }
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to submit feedback');
-    }
-  };
-
-  const loadCandidateFeedbackHistory = async (candidateId: string) => {
-    try {
-      const response = await InterviewService.getCandidateFeedbackHistory(candidateId);
-      if (response.success) {
-        setCandidateFeedbackHistory(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to load feedback history:', error);
-    }
+  const formatDateTime = (dateTime: string) => {
+    const date = new Date(dateTime);
+    return {
+      date: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+      time: date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    };
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed': return 'bg-success-100 text-success-800';
-      case 'pending': return 'bg-warning-100 text-warning-800';
-      case 'completed': return 'bg-primary-100 text-primary-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'confirmed': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'pending': return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'completed': return 'bg-brand-100 text-brand-800 border-brand-200';
+      default: return 'bg-slate-100 text-slate-800 border-slate-200';
     }
   };
 
   return (
     <div className="space-y-8">
-      <FeedbackModal
-        isOpen={showFeedbackModal}
-        onClose={() => {
-          setShowFeedbackModal(false);
-          setSelectedInterview(null);
-        }}
-        candidateName={selectedInterview?.candidateId?.name || ''}
-        jobTitle={selectedInterview?.jobId?.title || ''}
-        onSubmit={submitFeedback}
-      />
-
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-3 flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-              <Brain className="h-6 w-6 text-white" />
-            </div>
-            <span>HR Dashboard</span>
-          </h1>
-          <p className="text-gray-600 text-lg">Manage job postings, candidates, and interviews with AI assistance</p>
-        </div>
-        <div className="flex space-x-3">
-          <Button
-            onClick={() => setShowCreateJob(true)}
-            icon={Plus}
-          >
-            Post Job
-          </Button>
-        </div>
-      </div>
-
       {/* Create Job Modal */}
       {showCreateJob && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center space-x-2">
-              <Plus className="h-6 w-6 text-blue-600" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto" glass padding="xl" shadow="large">
+            <h3 className="text-3xl font-bold text-slate-900 mb-8 flex items-center space-x-3">
+              <Plus className="h-8 w-8 text-brand-600" />
               <span>Post New Job</span>
             </h3>
             
             <div className="grid md:grid-cols-2 gap-6">
-              <input
-                type="text"
-                placeholder="Job Title *"
+              <Input
+                label="Job Title"
                 value={newJob.title}
                 onChange={(e) => setNewJob({...newJob, title: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="e.g. Senior Frontend Developer"
+                required
+                size="lg"
               />
               
-              <input
-                type="text"
-                placeholder="Company *"
+              <Input
+                label="Company"
                 value={newJob.company}
                 onChange={(e) => setNewJob({...newJob, company: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="e.g. TechCorp Inc."
+                required
+                size="lg"
               />
               
-              <input
-                type="text"
-                placeholder="Location *"
+              <Input
+                label="Location"
                 value={newJob.location}
                 onChange={(e) => setNewJob({...newJob, location: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="e.g. San Francisco, CA or Remote"
+                required
+                size="lg"
               />
               
-              <select
-                value={newJob.type}
-                onChange={(e) => setNewJob({...newJob, type: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value="full-time">Full-time</option>
-                <option value="part-time">Part-time</option>
-                <option value="contract">Contract</option>
-                <option value="internship">Internship</option>
-              </select>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Job Type</label>
+                <select
+                  value={newJob.type}
+                  onChange={(e) => setNewJob({...newJob, type: e.target.value})}
+                  className="input-field text-lg"
+                >
+                  <option value="full-time">Full-time</option>
+                  <option value="part-time">Part-time</option>
+                  <option value="contract">Contract</option>
+                  <option value="internship">Internship</option>
+                </select>
+              </div>
               
-              <input
-                type="text"
-                placeholder="Required Skills (comma separated) *"
-                value={newJob.skills}
-                onChange={(e) => setNewJob({...newJob, skills: e.target.value})}
-                className="md:col-span-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-              
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="number"
-                  placeholder="Min Experience (years)"
-                  value={newJob.experienceMin}
-                  onChange={(e) => setNewJob({...newJob, experienceMin: parseInt(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-                <input
-                  type="number"
-                  placeholder="Max Experience (years)"
-                  value={newJob.experienceMax}
-                  onChange={(e) => setNewJob({...newJob, experienceMax: parseInt(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              <div className="md:col-span-2">
+                <Input
+                  label="Required Skills"
+                  value={newJob.skills}
+                  onChange={(e) => setNewJob({...newJob, skills: e.target.value})}
+                  placeholder="React, JavaScript, TypeScript, Node.js (comma separated)"
+                  required
+                  size="lg"
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-2">
-                <input
+              <div className="grid grid-cols-2 gap-4">
+                <Input
                   type="number"
-                  placeholder="Min Salary"
-                  value={newJob.salaryMin}
-                  onChange={(e) => setNewJob({...newJob, salaryMin: parseInt(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  label="Min Experience (years)"
+                  value={newJob.experienceMin.toString()}
+                  onChange={(e) => setNewJob({...newJob, experienceMin: parseInt(e.target.value) || 0})}
+                  size="lg"
                 />
-                <input
+                <Input
                   type="number"
-                  placeholder="Max Salary"
-                  value={newJob.salaryMax}
-                  onChange={(e) => setNewJob({...newJob, salaryMax: parseInt(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  label="Max Experience (years)"
+                  value={newJob.experienceMax.toString()}
+                  onChange={(e) => setNewJob({...newJob, experienceMax: parseInt(e.target.value) || 5})}
+                  size="lg"
                 />
               </div>
               
-              <textarea
-                placeholder="Job Description *"
-                value={newJob.description}
-                onChange={(e) => setNewJob({...newJob, description: e.target.value})}
-                className="md:col-span-2 w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                rows={4}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  type="number"
+                  label="Min Salary ($)"
+                  value={newJob.salaryMin.toString()}
+                  onChange={(e) => setNewJob({...newJob, salaryMin: parseInt(e.target.value) || 50000})}
+                  size="lg"
+                />
+                <Input
+                  type="number"
+                  label="Max Salary ($)"
+                  value={newJob.salaryMax.toString()}
+                  onChange={(e) => setNewJob({...newJob, salaryMax: parseInt(e.target.value) || 100000})}
+                  size="lg"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Job Description</label>
+                <textarea
+                  value={newJob.description}
+                  onChange={(e) => setNewJob({...newJob, description: e.target.value})}
+                  placeholder="Describe the role, responsibilities, and what you're looking for..."
+                  className="input-field text-lg"
+                  rows={4}
+                  required
+                />
+              </div>
             </div>
             
             <div className="flex space-x-4 mt-8">
@@ -411,13 +339,15 @@ export default function HRDashboard() {
                 disabled={loading}
                 loading={loading}
                 className="flex-1"
+                size="xl"
               >
-                {loading ? 'Creating...' : 'Post Job'}
+                {loading ? 'Creating Job...' : 'Post Job'}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowCreateJob(false)}
                 className="flex-1"
+                size="xl"
               >
                 Cancel
               </Button>
@@ -426,71 +356,54 @@ export default function HRDashboard() {
         </div>
       )}
 
-      {/* Schedule Interview Modal */}
-      {showScheduleModal && selectedCandidate && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="p-8 w-full max-w-lg shadow-2xl">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center space-x-2">
-              <Calendar className="h-6 w-6 text-blue-600" />
-              <span>Schedule Interview</span>
+      {/* Slots Management Modal */}
+      {showSlotsModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto" glass padding="xl" shadow="large">
+            <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center space-x-2">
+              <Calendar className="h-6 w-6 text-brand-600" />
+              <span>Manage Interview Slots</span>
             </h3>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-              <p className="text-blue-800 font-semibold">Candidate: {selectedCandidate.userId.name}</p>
-              <p className="text-blue-700 text-sm">Google Meet link will be generated automatically</p>
+            
+            <div className="space-y-4 mb-6">
+              <div className="flex justify-between items-center">
+                <h4 className="font-semibold text-slate-900">Available Time Slots</h4>
+                <Button size="sm" onClick={addTimeSlot} icon={Plus}>
+                  Add Slot
+                </Button>
+              </div>
+              
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {availableSlots.map((slot, index) => {
+                  const { date, time } = formatDateTime(slot);
+                  return (
+                    <div key={index} className="flex items-center justify-between p-4 glass rounded-xl border border-slate-200/60">
+                      <div className="flex items-center space-x-3">
+                        <Calendar className="h-4 w-4 text-brand-600" />
+                        <span className="font-medium text-slate-900">{date} at {time}</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => removeTimeSlot(index)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
             
-            <div className="space-y-6">
-              <input
-                type="datetime-local"
-                value={newInterview.scheduledDateTime}
-                onChange={(e) => setNewInterview({...newInterview, scheduledDateTime: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
-              
-              <select
-                value={newInterview.type}
-                onChange={(e) => setNewInterview({...newInterview, type: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value="technical">Technical Interview</option>
-                <option value="hr">HR Interview</option>
-                <option value="behavioral">Behavioral Interview</option>
-                <option value="final">Final Interview</option>
-              </select>
-              
-              <input
-                type="number"
-                placeholder="Duration (minutes)"
-                value={newInterview.duration}
-                onChange={(e) => setNewInterview({...newInterview, duration: parseInt(e.target.value)})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
-              
-              <textarea
-                placeholder="Notes"
-                value={newInterview.notes}
-                onChange={(e) => setNewInterview({...newInterview, notes: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                rows={3}
-              />
-            </div>
-            
-            <div className="flex space-x-4 mt-8">
-              <Button
-                onClick={scheduleInterview}
-                disabled={loading}
-                loading={loading}
-                className="flex-1"
-              >
-                {loading ? 'Scheduling...' : 'Schedule'}
+            <div className="flex space-x-4">
+              <Button onClick={saveSlots} className="flex-1" size="lg">
+                Save Slots
               </Button>
               <Button
                 variant="outline"
-                onClick={() => {
-                  setShowScheduleModal(false);
-                  setSelectedCandidate(null);
-                }}
+                onClick={() => setShowSlotsModal(false)}
                 className="flex-1"
+                size="lg"
               >
                 Cancel
               </Button>
@@ -499,67 +412,99 @@ export default function HRDashboard() {
         </div>
       )}
 
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-5xl font-bold text-slate-900 mb-4 flex items-center space-x-4">
+            <div className="w-16 h-16 gradient-brand rounded-3xl flex items-center justify-center shadow-large">
+              <Brain className="h-8 w-8 text-white" />
+            </div>
+            <span>HR Dashboard</span>
+          </h1>
+          <p className="text-slate-600 text-xl font-medium">Manage job postings, candidates, and interviews with AI assistance</p>
+        </div>
+        <div className="flex space-x-3">
+          <Button
+            onClick={() => setShowCreateJob(true)}
+            icon={Plus}
+            size="lg"
+          >
+            Post Job
+          </Button>
+        </div>
+      </div>
+
       {/* View Toggle */}
-      <Card className="p-8" gradient>
+      <Card glass padding="lg" shadow="large" className="border border-white/20">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
-            <Zap className="h-6 w-6 text-blue-600" />
+          <h2 className="text-2xl font-bold text-slate-900 flex items-center space-x-2">
+            <Zap className="h-6 w-6 text-brand-600" />
             <span>Management Dashboard</span>
           </h2>
-          <div className="flex space-x-3">
-            <button
-              onClick={() => setView('jobs')}
-              className={`px-6 py-3 rounded-xl transition-all duration-200 font-medium ${
-                view === 'jobs' 
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
-              }`}
-            >
-              My Jobs
-            </button>
-            <button
-              onClick={() => setView('applicants')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                view === 'applicants' 
-                  ? 'bg-primary-600 text-white' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Applicants
-            </button>
-            <button
-              onClick={() => setView('interviews')}
-              className={`px-6 py-3 rounded-xl transition-all duration-200 font-medium ${
-                view === 'interviews' 
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
-              }`}
-            >
-              Interviews
-            </button>
+          <div className="flex space-x-2">
+            {[
+              { key: 'jobs', label: 'My Jobs', icon: Briefcase },
+              { key: 'applicants', label: 'Applicants', icon: Users },
+              { key: 'interviews', label: 'Interviews', icon: Calendar },
+              { key: 'slots', label: 'Time Slots', icon: Clock }
+            ].map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setView(key as any)}
+                className={`px-6 py-3 rounded-xl transition-all duration-200 font-medium flex items-center space-x-2 ${
+                  view === key 
+                    ? 'gradient-brand text-white shadow-lg' 
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-md'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{label}</span>
+              </button>
+            ))}
           </div>
         </div>
 
         {view === 'jobs' && (
           <div className="space-y-6">
             {jobs.map((job) => (
-              <div key={job._id} className="bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-                <div className="flex justify-between items-start">
+              <div key={job._id} className="glass rounded-2xl p-8 shadow-medium border border-white/20 hover:shadow-large transition-all duration-300">
+                <div className="flex justify-between items-start mb-6">
                   <div className="flex-1">
-                    <h3 className="font-bold text-gray-900 text-xl">{job.title}</h3>
-                    <p className="text-gray-700 font-medium text-lg">{job.company} • {job.location}</p>
-                    <p className="text-sm text-gray-600 mt-2 font-medium">
-                      {job.applicants?.length || 0} applicants
+                    <h3 className="font-bold text-slate-900 text-2xl mb-2">{job.title}</h3>
+                    <div className="flex items-center space-x-6 text-slate-600 mb-4">
+                      <div className="flex items-center space-x-2">
+                        <Users className="h-4 w-4" />
+                        <span className="font-medium">{job.company}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="h-4 w-4" />
+                        <span className="font-medium">{job.location}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <DollarSign className="h-4 w-4" />
+                        <span className="font-medium">
+                          ${job.salary.min.toLocaleString()} - ${job.salary.max.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-slate-600 font-medium">
+                      {job.applicants?.length || 0} applicants • {job.availableSlots?.length || 0} interview slots
                     </p>
                   </div>
                   <div className="flex space-x-3">
                     <Button
                       size="sm"
                       variant="outline"
+                      onClick={() => manageSlots(job._id)}
+                      icon={Clock}
+                    >
+                      Manage Slots
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => {
                         setSelectedJob(job._id);
                         setView('applicants');
-                        loadJobApplicants(job._id);
                       }}
                       icon={Eye}
                     >
@@ -572,118 +517,141 @@ export default function HRDashboard() {
           </div>
         )}
 
-        {view === 'applicants' && (
-          <div className="space-y-4">
-            {selectedJob ? (
-              <>
-                <div className="flex items-center space-x-4 mb-4">
-                  <button
-                    onClick={() => setView('jobs')}
-                    className="text-primary-600 hover:text-primary-700"
-                  >
-                    ← Back to Jobs
-                  </button>
-                  <h3 className="font-semibold text-gray-900">
-                    Applicants for {jobs.find(j => j._id === selectedJob)?.title}
-                  </h3>
-                </div>
-                
-                {jobs.find(j => j._id === selectedJob)?.applicants?.map((applicant) => (
-                  <div key={applicant.userId._id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">{applicant.userId.name}</h4>
-                        <p className="text-gray-600">{applicant.userId.email}</p>
-                        <p className="text-sm text-primary-600 font-medium">
-                          Match Score: {applicant.matchScore}%
-                        </p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Applied: {new Date(applicant.appliedAt).toLocaleDateString()}
-                        </p>
-                        {applicant.candidateBrief && (
-                          <div className="mt-2 p-3 bg-blue-50 rounded-lg">
-                            <p className="text-sm text-blue-800">{applicant.candidateBrief}</p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex space-x-2">
-                        <button 
-                          onClick={() => {
-                            setSelectedCandidate(applicant);
-                            setShowScheduleModal(true);
-                          }}
-                          className="px-3 py-1 text-sm bg-secondary-600 text-white rounded hover:bg-secondary-700 transition-colors flex items-center space-x-1"
-                        >
-                          <Calendar className="h-4 w-4" />
-                          <span>Schedule</span>
-                        </button>
-                      </div>
+        {view === 'applicants' && selectedJob && (
+          <div className="space-y-6">
+            <div className="flex items-center space-x-4 mb-6">
+              <Button
+                variant="outline"
+                onClick={() => setView('jobs')}
+                size="sm"
+              >
+                ← Back to Jobs
+              </Button>
+              <h3 className="font-bold text-slate-900 text-xl">
+                Applicants for {jobs.find(j => j._id === selectedJob)?.title}
+              </h3>
+            </div>
+            
+            {jobs.find(j => j._id === selectedJob)?.applicants?.map((applicant) => (
+              <div key={applicant.userId._id} className="glass rounded-2xl p-8 shadow-medium border border-white/20">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-4 mb-4">
+                      <h4 className="font-bold text-slate-900 text-xl">{applicant.userId.name}</h4>
+                      <span className="px-3 py-1 bg-brand-100 text-brand-800 rounded-full text-sm font-bold">
+                        {applicant.matchScore}% Match
+                      </span>
+                      {applicant.testPassed && (
+                        <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm font-bold">
+                          Test Score: {applicant.testScore}%
+                        </span>
+                      )}
                     </div>
+                    <p className="text-slate-600 font-medium mb-2">{applicant.userId.email}</p>
+                    <p className="text-sm text-slate-500 mb-4">
+                      Applied: {new Date(applicant.appliedAt).toLocaleDateString()}
+                    </p>
+                    {applicant.candidateBrief && (
+                      <div className="p-4 bg-brand-50 rounded-xl border border-brand-200 mb-4">
+                        <p className="text-brand-800 font-medium">{applicant.candidateBrief}</p>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </>
-            ) : (
-              <p className="text-gray-500 text-center py-8">Select a job to view applicants</p>
-            )}
+                  <div className="flex flex-col space-y-3">
+                    {applicant.testPassed ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        icon={Calendar}
+                        onClick={() => {
+                          // Schedule interview logic
+                          alert('Interview scheduling feature will be implemented');
+                        }}
+                      >
+                        Schedule Interview
+                      </Button>
+                    ) : (
+                      <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm font-bold">
+                        Awaiting Test Completion
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
         {view === 'interviews' && (
           <div className="space-y-6">
             {interviews.map((interview) => (
-              <div key={interview._id} className="bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-lg">
+              <div key={interview._id} className="glass rounded-2xl p-8 shadow-medium border border-white/20">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h4 className="font-bold text-gray-900 text-lg">
+                    <h4 className="font-bold text-slate-900 text-xl mb-2">
                       {interview.candidateId?.name} - {interview.jobId?.title}
                     </h4>
-                    <p className="text-gray-700 font-medium">{interview.jobId?.company}</p>
-                    <div className="flex items-center space-x-4 text-sm text-gray-700 mt-2">
-                      <span className="font-medium">{new Date(interview.scheduledDateTime).toLocaleDateString()}</span>
-                      <span className="font-medium">{new Date(interview.scheduledDateTime).toLocaleTimeString()}</span>
+                    <p className="text-slate-700 font-medium mb-4">{interview.jobId?.company}</p>
+                    <div className="flex items-center space-x-6 text-slate-600 mb-4">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="h-4 w-4" />
+                        <span className="font-medium">{new Date(interview.scheduledDateTime).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4" />
+                        <span className="font-medium">{new Date(interview.scheduledDateTime).toLocaleTimeString()}</span>
+                      </div>
                       <span className="font-medium">{interview.duration} min</span>
                     </div>
-                    {interview.candidateBrief && (
-                      <div className="mt-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                        <p className="text-sm text-blue-800 font-medium">{interview.candidateBrief}</p>
-                      </div>
-                    )}
                   </div>
                   <div className="flex flex-col items-end space-y-3">
-                    <span className={`px-3 py-1.5 rounded-full text-sm font-bold shadow-lg ${getStatusColor(interview.status)}`}>
+                    <span className={`px-4 py-2 rounded-full text-sm font-bold shadow-soft border ${getStatusColor(interview.status)}`}>
                       {interview.status}
                     </span>
                     {interview.meetingLink && (
-                      <div className="flex flex-col space-y-2">
-                        <a
-                          href={interview.meetingLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-700 text-sm font-semibold flex items-center space-x-1"
-                        >
-                          <Video className="h-4 w-4" />
-                          <span>Join Meeting</span>
-                        </a>
-                        {interview.status === 'confirmed' && (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => endMeeting(interview._id)}
-                            icon={CheckCircle}
-                          >
-                            End Meeting
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => loadCandidateFeedbackHistory(interview.candidateId._id)}
+                      <a
+                        href={interview.meetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-600 hover:text-brand-700 text-sm font-semibold flex items-center space-x-1"
                       >
-                      View History
-                    </Button>
+                        <Video className="h-4 w-4" />
+                        <span>Join Meeting</span>
+                      </a>
+                    )}
                   </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {view === 'slots' && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Interview Slot Management</h3>
+              <p className="text-slate-600 mb-8">
+                Manage your available interview time slots. Candidates can request these slots for interviews.
+              </p>
+              <Button onClick={() => setShowSlotsModal(true)} icon={Plus} size="lg">
+                Manage All Slots
+              </Button>
+            </div>
+            
+            {jobs.map((job) => (
+              <div key={job._id} className="glass rounded-2xl p-6 shadow-medium border border-white/20">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-lg">{job.title}</h4>
+                    <p className="text-slate-600">{job.availableSlots?.length || 0} available slots</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => manageSlots(job._id)}
+                    icon={Calendar}
+                  >
+                    Manage Slots
+                  </Button>
                 </div>
               </div>
             ))}
