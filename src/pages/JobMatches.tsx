@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Target, MapPin, DollarSign, Clock, Users, Star, Award, CheckCircle, ExternalLink, Briefcase, TrendingUp, Zap, Brain, ArrowRight, Play, Calendar } from 'lucide-react';
-import { ResumeAnalysisService, JobService, TestResult, StorageService } from '../services/api';
+import { 
+  Target, MapPin, DollarSign, Clock, Users, Star, Award, CheckCircle, 
+  ExternalLink, Briefcase, TrendingUp, Zap, Brain, ArrowRight, Calendar,
+  Building, Globe, Heart, Bookmark
+} from 'lucide-react';
+import { ResumeAnalysisService, JobService, StorageService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import TestModal from '../components/TestModal';
 import InterviewSlotModal from '../components/InterviewSlotModal';
+import Toast from '../components/ui/Toast';
 
 interface JobMatch {
   _id: string;
@@ -41,17 +45,17 @@ export default function JobMatches() {
   const { user } = useAuth();
   const [jobs, setJobs] = useState<JobMatch[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showTestModal, setShowTestModal] = useState(false);
   const [showSlotModal, setShowSlotModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobMatch | null>(null);
   const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
-  const [testResults, setTestResults] = useState<Map<string, TestResult>>(new Map());
   const [resumeData, setResumeData] = useState<any>(null);
   const [currentResumeId, setCurrentResumeId] = useState<string>('');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [likedJobs, setLikedJobs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadJobMatches();
-    loadTestResults();
+    loadApplicationStatus();
   }, []);
 
   const loadJobMatches = async () => {
@@ -63,8 +67,8 @@ export default function JobMatches() {
       if (currentAnalysisId) {
         setCurrentResumeId(currentAnalysisId);
         const response = await ResumeAnalysisService.findJobMatches(currentAnalysisId);
-        setJobs(response.matches || []);
-        setResumeData(response.resumeData);
+        setJobs(response.data.matches || []);
+        setResumeData(response.data.resumeData);
       } else {
         const response = await JobService.getJobs();
         const jobsWithScores = response.data.jobs.map((job: any) => ({
@@ -84,15 +88,10 @@ export default function JobMatches() {
     }
   };
 
-  const loadTestResults = () => {
-    const results = new Map<string, TestResult>();
-    jobs.forEach(job => {
-      const result = StorageService.getTestResult(job._id);
-      if (result) {
-        results.set(job._id, result);
-      }
-    });
-    setTestResults(results);
+  const loadApplicationStatus = () => {
+    const applications = StorageService.getApplications();
+    const appliedJobIds = new Set(applications.map((app: any) => app.jobId));
+    setAppliedJobs(appliedJobIds);
   };
 
   const getMockJobs = (): JobMatch[] => [
@@ -119,59 +118,55 @@ export default function JobMatches() {
     }
   ];
 
-  const startApplication = (job: JobMatch) => {
-    const existingResult = testResults.get(job._id);
-    
-    if (existingResult && existingResult.passed) {
-      // Test already passed, proceed to interview scheduling
-      setSelectedJob(job);
-      setShowSlotModal(true);
-    } else {
-      // Need to take test first
-      setSelectedJob(job);
-      setShowTestModal(true);
+  const applyToJob = async (job: JobMatch) => {
+    if (!currentResumeId) {
+      setToast({ message: 'Please upload your resume first', type: 'error' });
+      return;
+    }
+
+    try {
+      const response = await JobService.applyToJob(job._id, currentResumeId);
+      if (response.success) {
+        StorageService.saveApplication(job._id, currentResumeId, job.matchScore || 85);
+        setAppliedJobs(prev => new Set([...prev, job._id]));
+        setSelectedJob(job);
+        setShowSlotModal(true);
+        setToast({ message: 'Application submitted successfully!', type: 'success' });
+      }
+    } catch (error) {
+      setToast({ message: 'Failed to apply. Please try again.', type: 'error' });
     }
   };
 
-  const handleTestComplete = (result: TestResult) => {
-    setShowTestModal(false);
-    
-    if (selectedJob) {
-      StorageService.saveTestResult(selectedJob._id, result);
-      setTestResults(prev => new Map(prev.set(selectedJob._id, result)));
-      
-      if (result.passed) {
-        // Test passed, proceed to interview scheduling
-        setTimeout(() => {
-          setShowSlotModal(true);
-        }, 1000);
+  const toggleLike = (jobId: string) => {
+    setLikedJobs(prev => {
+      const newLiked = new Set(prev);
+      if (newLiked.has(jobId)) {
+        newLiked.delete(jobId);
       } else {
-        alert(`You scored ${result.score}%. Unfortunately, you didn't meet the minimum requirement of 70%. You can retake the test after 24 hours.`);
-        setSelectedJob(null);
+        newLiked.add(jobId);
       }
-    }
+      return newLiked;
+    });
   };
 
   const handleSlotRequested = () => {
-    if (selectedJob) {
-      setAppliedJobs(prev => new Set([...prev, selectedJob._id]));
-      alert(`Interview slot requested successfully for ${selectedJob.title} at ${selectedJob.company}! The recruiter will confirm within 24 hours.`);
-    }
+    setToast({ message: 'Interview slot requested! HR will confirm within 24 hours.', type: 'success' });
     setSelectedJob(null);
   };
 
   const getMatchColor = (score: number) => {
     if (score >= 90) return 'text-emerald-600 bg-emerald-100 border-emerald-200';
-    if (score >= 80) return 'text-brand-600 bg-brand-100 border-brand-200';
+    if (score >= 80) return 'text-blue-600 bg-blue-100 border-blue-200';
     if (score >= 70) return 'text-amber-600 bg-amber-100 border-amber-200';
     return 'text-rose-600 bg-rose-100 border-rose-200';
   };
 
   const getMatchLabel = (score: number) => {
-    if (score >= 90) return 'Excellent Match';
-    if (score >= 80) return 'Great Match';
-    if (score >= 70) return 'Good Match';
-    return 'Fair Match';
+    if (score >= 90) return 'EXCELLENT MATCH';
+    if (score >= 80) return 'GOOD MATCH';
+    if (score >= 70) return 'FAIR MATCH';
+    return 'POOR MATCH';
   };
 
   const formatSalary = (salary: { min: number; max: number; currency: string }) => {
@@ -184,25 +179,11 @@ export default function JobMatches() {
     return `${formatter.format(salary.min)} - ${formatter.format(salary.max)}`;
   };
 
-  const getApplicationStatus = (job: JobMatch) => {
-    const testResult = testResults.get(job._id);
-    
-    if (appliedJobs.has(job._id)) {
-      return { status: 'applied', label: 'Interview Requested', color: 'bg-brand-100 text-brand-800' };
-    } else if (testResult?.passed) {
-      return { status: 'test-passed', label: 'Test Passed - Ready to Apply', color: 'bg-emerald-100 text-emerald-800' };
-    } else if (testResult && !testResult.passed) {
-      return { status: 'test-failed', label: 'Test Failed - Retake Available', color: 'bg-rose-100 text-rose-800' };
-    } else {
-      return { status: 'not-started', label: 'Assessment Required', color: 'bg-amber-100 text-amber-800' };
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
-          <div className="w-16 h-16 gradient-brand rounded-3xl flex items-center justify-center mx-auto mb-4 animate-pulse-soft shadow-large">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-violet-600 rounded-3xl flex items-center justify-center mx-auto mb-4 animate-pulse shadow-xl">
             <Brain className="h-8 w-8 text-white" />
           </div>
           <h3 className="text-xl font-bold text-slate-900 mb-2">Finding Perfect Matches</h3>
@@ -214,16 +195,13 @@ export default function JobMatches() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <TestModal
-        isOpen={showTestModal}
-        onClose={() => {
-          setShowTestModal(false);
-          setSelectedJob(null);
-        }}
-        jobTitle={selectedJob?.title || ''}
-        jobId={selectedJob?._id || ''}
-        onTestComplete={handleTestComplete}
-      />
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
 
       <InterviewSlotModal
         isOpen={showSlotModal}
@@ -238,58 +216,75 @@ export default function JobMatches() {
         onSlotRequested={handleSlotRequested}
       />
 
-      <div>
-        <h1 className="text-5xl font-bold text-slate-900 mb-4 flex items-center space-x-4">
-          <div className="w-16 h-16 gradient-brand rounded-3xl flex items-center justify-center shadow-large">
-            <Target className="h-8 w-8 text-white" />
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-5xl font-bold text-slate-900 mb-4 flex items-center space-x-4">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-violet-600 rounded-3xl flex items-center justify-center shadow-xl">
+              <Target className="h-8 w-8 text-white" />
+            </div>
+            <span>Job Matches</span>
+          </h1>
+          <p className="text-slate-600 text-xl font-medium leading-relaxed">
+            Discover opportunities perfectly matched to your skills and experience
+          </p>
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 px-4 py-2 glass rounded-2xl border border-white/20">
+            <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+            <span className="text-sm font-medium text-slate-700">{jobs.length} matches found</span>
           </div>
-          <span>Job Matches</span>
-        </h1>
-        <p className="text-slate-600 text-xl font-medium leading-relaxed">
-          Discover opportunities perfectly matched to your skills and experience with AI-powered recommendations
-        </p>
+        </div>
       </div>
 
+      {/* Profile Strength Card */}
       {resumeData && (
-        <Card glass padding="xl" shadow="large" className="border border-white/20">
-          <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center space-x-3">
-            <TrendingUp className="h-6 w-6 text-brand-600" />
-            <span>Your Profile Strength</span>
-          </h2>
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-brand-100 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-medium">
-                <Zap className="h-8 w-8 text-brand-600" />
+        <Card className="bg-gradient-to-r from-blue-600 via-violet-600 to-blue-700 text-white shadow-2xl border-0 relative overflow-hidden" padding="xl">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
+          </div>
+          <div className="relative z-10">
+            <h2 className="text-2xl font-bold mb-6 flex items-center space-x-3">
+              <TrendingUp className="h-6 w-6" />
+              <span>Your Profile Strength</span>
+            </h2>
+            <div className="grid md:grid-cols-4 gap-6">
+              <div className="text-center">
+                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Zap className="h-7 w-7 text-white" />
+                </div>
+                <div className="text-3xl font-bold mb-2">{resumeData.skills?.length || 0}</div>
+                <div className="text-white/90 font-semibold">Technical Skills</div>
               </div>
-              <div className="text-3xl font-bold text-slate-900 mb-2">{resumeData.skills?.length || 0}</div>
-              <div className="text-slate-600 font-semibold">Technical Skills</div>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-violet-100 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-medium">
-                <Briefcase className="h-8 w-8 text-violet-600" />
+              <div className="text-center">
+                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Briefcase className="h-7 w-7 text-white" />
+                </div>
+                <div className="text-3xl font-bold mb-2">{resumeData.experience?.length || 0}</div>
+                <div className="text-white/90 font-semibold">Work Experience</div>
               </div>
-              <div className="text-3xl font-bold text-slate-900 mb-2">{resumeData.experience?.length || 0}</div>
-              <div className="text-slate-600 font-semibold">Work Experience</div>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-emerald-100 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-medium">
-                <Award className="h-8 w-8 text-emerald-600" />
+              <div className="text-center">
+                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Award className="h-7 w-7 text-white" />
+                </div>
+                <div className="text-3xl font-bold mb-2">{resumeData.projects?.length || 0}</div>
+                <div className="text-white/90 font-semibold">Projects</div>
               </div>
-              <div className="text-3xl font-bold text-slate-900 mb-2">{resumeData.projects?.length || 0}</div>
-              <div className="text-slate-600 font-semibold">Projects</div>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-amber-100 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-medium">
-                <Star className="h-8 w-8 text-amber-600" />
+              <div className="text-center">
+                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Star className="h-7 w-7 text-white" />
+                </div>
+                <div className="text-3xl font-bold mb-2">{jobs.length}</div>
+                <div className="text-white/90 font-semibold">Job Matches</div>
               </div>
-              <div className="text-3xl font-bold text-slate-900 mb-2">{jobs.length}</div>
-              <div className="text-slate-600 font-semibold">Job Matches</div>
             </div>
           </div>
         </Card>
       )}
 
-      <div className="space-y-8">
+      {/* Job Listings */}
+      <div className="space-y-6">
         {jobs.length === 0 ? (
           <Card className="text-center py-16" glass padding="xl" shadow="large">
             <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
@@ -304,204 +299,181 @@ export default function JobMatches() {
             </Button>
           </Card>
         ) : (
-          jobs.map((job) => {
-            const applicationStatus = getApplicationStatus(job);
-            const testResult = testResults.get(job._id);
-            
-            return (
-              <Card key={job._id} className="group" hover glass padding="xl" shadow="large" className="border border-white/20">
-                <div className="flex justify-between items-start mb-8">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-4 mb-4">
-                      <h3 className="text-3xl font-bold text-slate-900 group-hover:text-brand-600 transition-colors">
+          jobs.map((job) => (
+            <Card key={job._id} className="group hover:scale-[1.02]" glass padding="xl" shadow="large" className="border border-white/20">
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-4">
+                      <h3 className="text-2xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                         {job.title}
                       </h3>
                       {job.matchScore && (
-                        <span className={`px-4 py-2 rounded-2xl text-sm font-bold shadow-soft border ${getMatchColor(job.matchScore)}`}>
-                          {job.matchScore}% Match
-                        </span>
-                      )}
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${applicationStatus.color}`}>
-                        {applicationStatus.label}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-6 text-slate-600 mb-6">
-                      <div className="flex items-center space-x-2">
-                        <Users className="h-5 w-5" />
-                        <span className="font-semibold text-lg">{job.company}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="h-5 w-5" />
-                        <span className="font-medium">{job.location}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Clock className="h-5 w-5" />
-                        <span className="font-medium capitalize">{job.type}</span>
-                      </div>
-                    </div>
-                    <p className="text-slate-700 leading-relaxed mb-6 font-medium">
-                      {job.description}
-                    </p>
-                  </div>
-                  <div className="text-right ml-8">
-                    <div className="text-2xl font-bold text-slate-900 mb-2">
-                      {formatSalary(job.salary)}
-                    </div>
-                    <div className="text-sm text-slate-500 font-medium">Annual Salary</div>
-                  </div>
-                </div>
-
-                {job.matchScore && (
-                  <div className="grid md:grid-cols-4 gap-6 mb-8 p-6 glass rounded-3xl border border-slate-200/60">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-brand-600 mb-1">{job.matchScore}%</div>
-                      <div className="text-sm text-slate-600 font-semibold">Overall Match</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-emerald-600 mb-1">{job.skillsMatch}%</div>
-                      <div className="text-sm text-slate-600 font-semibold">Skills Match</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-violet-600 mb-1">{job.experienceMatch}%</div>
-                      <div className="text-sm text-slate-600 font-semibold">Experience</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-amber-600 mb-1">{job.educationMatch}%</div>
-                      <div className="text-sm text-slate-600 font-semibold">Education</div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="mb-8">
-                  <h4 className="font-bold text-slate-900 text-lg mb-4 flex items-center space-x-2">
-                    <Zap className="h-5 w-5 text-brand-600" />
-                    <span>Required Skills</span>
-                  </h4>
-                  <div className="flex flex-wrap gap-3">
-                    {job.requirements.skills.map((skill, index) => (
-                      <span 
-                        key={index}
-                        className="px-4 py-2 bg-gradient-to-r from-brand-100 to-violet-100 text-brand-800 rounded-2xl text-sm font-bold border border-brand-200 shadow-soft hover:shadow-medium transition-all duration-300 hover:scale-105"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {testResult && (
-                  <div className={`mb-8 p-6 rounded-3xl border ${
-                    testResult.passed 
-                      ? 'bg-emerald-50 border-emerald-200' 
-                      : 'bg-rose-50 border-rose-200'
-                  }`}>
-                    <h4 className="font-bold text-slate-900 text-lg mb-3 flex items-center space-x-2">
-                      <Award className="h-5 w-5 text-emerald-600" />
-                      <span>Assessment Results</span>
-                    </h4>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className={`font-bold text-lg ${testResult.passed ? 'text-emerald-600' : 'text-rose-600'}`}>
-                          Score: {testResult.score}% ({testResult.correctAnswers}/{testResult.totalQuestions} correct)
-                        </p>
-                        <p className={`text-sm font-medium ${testResult.passed ? 'text-emerald-700' : 'text-rose-700'}`}>
-                          {testResult.passed ? '✅ Assessment Passed' : '❌ Assessment Failed'}
-                        </p>
-                      </div>
-                      {testResult.passed && (
-                        <CheckCircle className="h-8 w-8 text-emerald-600" />
+                        <div className="flex items-center space-x-2">
+                          <div className="relative w-16 h-16">
+                            <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+                              <path
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                fill="none"
+                                stroke="#e5e7eb"
+                                strokeWidth="2"
+                              />
+                              <path
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                fill="none"
+                                stroke={job.matchScore >= 90 ? '#10b981' : job.matchScore >= 80 ? '#3b82f6' : '#f59e0b'}
+                                strokeWidth="2"
+                                strokeDasharray={`${job.matchScore}, 100`}
+                                className="transition-all duration-1000"
+                              />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-sm font-bold text-slate-900">{job.matchScore}%</span>
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className={`text-xs font-bold px-2 py-1 rounded-full ${getMatchColor(job.matchScore)}`}>
+                              {getMatchLabel(job.matchScore)}
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </div>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between pt-6 border-t border-slate-200/60">
-                  <div className="flex items-center space-x-2">
-                    {job.matchScore && (
-                      <span className={`px-3 py-1 rounded-full text-sm font-bold border ${getMatchColor(job.matchScore)}`}>
-                        {getMatchLabel(job.matchScore)}
-                      </span>
-                    )}
-                    <span className="text-sm text-slate-500 font-medium">
-                      Posted {new Date(job.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      icon={ExternalLink}
-                    >
-                      View Details
-                    </Button>
                     
-                    {appliedJobs.has(job._id) ? (
-                      <Button
-                        variant="success"
-                        size="lg"
-                        icon={Calendar}
-                        disabled
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => toggleLike(job._id)}
+                        className={`p-2 rounded-xl transition-all duration-300 ${
+                          likedJobs.has(job._id) 
+                            ? 'bg-rose-100 text-rose-600 hover:bg-rose-200' 
+                            : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                        }`}
                       >
-                        Interview Requested
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => startApplication(job)}
-                        size="lg"
-                        icon={testResults.get(job._id)?.passed ? Calendar : Play}
-                        className="group"
-                        variant={testResults.get(job._id)?.passed ? 'secondary' : 'primary'}
-                      >
-                        <span>
-                          {testResults.get(job._id)?.passed 
-                            ? 'Schedule Interview' 
-                            : 'Take Assessment & Apply'
-                          }
-                        </span>
-                        <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                      </Button>
-                    )}
+                        <Heart className={`h-5 w-5 ${likedJobs.has(job._id) ? 'fill-current' : ''}`} />
+                      </button>
+                      <button className="p-2 bg-slate-100 text-slate-400 hover:bg-slate-200 rounded-xl transition-all duration-300">
+                        <Bookmark className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-6 text-slate-600 mb-4">
+                    <div className="flex items-center space-x-2">
+                      <Building className="h-4 w-4" />
+                      <span className="font-semibold">{job.company}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="h-4 w-4" />
+                      <span className="font-medium">{job.location}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Clock className="h-4 w-4" />
+                      <span className="font-medium capitalize">{job.type}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Globe className="h-4 w-4" />
+                      <span className="font-medium">Remote OK</span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-slate-700 leading-relaxed mb-6 font-medium">
+                    {job.description}
+                  </p>
+                  
+                  <div className="text-2xl font-bold text-slate-900 mb-4">
+                    {formatSalary(job.salary)}
+                    <span className="text-sm text-slate-500 font-medium ml-2">per year</span>
                   </div>
                 </div>
-              </Card>
-            );
-          })
+              </div>
+
+              {/* Match Breakdown */}
+              {job.matchScore && (
+                <div className="grid md:grid-cols-4 gap-4 mb-6 p-6 glass rounded-2xl border border-slate-200/60">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-blue-600 mb-1">{job.matchScore}%</div>
+                    <div className="text-xs text-slate-600 font-semibold">Overall</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-emerald-600 mb-1">{job.skillsMatch}%</div>
+                    <div className="text-xs text-slate-600 font-semibold">Skills</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-violet-600 mb-1">{job.experienceMatch}%</div>
+                    <div className="text-xs text-slate-600 font-semibold">Experience</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-amber-600 mb-1">{job.educationMatch}%</div>
+                    <div className="text-xs text-slate-600 font-semibold">Education</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Required Skills */}
+              <div className="mb-6">
+                <h4 className="font-bold text-slate-900 text-lg mb-4 flex items-center space-x-2">
+                  <Zap className="h-5 w-5 text-blue-600" />
+                  <span>Required Skills</span>
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {job.requirements.skills.map((skill, index) => (
+                    <span 
+                      key={index}
+                      className="px-3 py-1 bg-gradient-to-r from-blue-100 to-violet-100 text-blue-800 rounded-xl text-sm font-bold border border-blue-200 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between pt-6 border-t border-slate-200/60">
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm text-slate-500 font-medium">
+                    Posted {new Date(job.createdAt).toLocaleDateString()}
+                  </span>
+                  <span className="text-sm text-slate-500">•</span>
+                  <span className="text-sm text-slate-500 font-medium">
+                    {Math.floor(Math.random() * 50) + 10} applicants
+                  </span>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    icon={ExternalLink}
+                  >
+                    View Details
+                  </Button>
+                  
+                  {appliedJobs.has(job._id) ? (
+                    <Button
+                      variant="success"
+                      size="lg"
+                      icon={CheckCircle}
+                      disabled
+                    >
+                      Applied
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => applyToJob(job)}
+                      size="lg"
+                      icon={Calendar}
+                      className="group bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+                    >
+                      <span>Apply Now</span>
+                      <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))
         )}
       </div>
-
-      {jobs.length > 0 && (
-        <Card className="gradient-brand text-white shadow-large border-0 relative overflow-hidden" padding="xl">
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
-          </div>
-          <div className="relative z-10 text-center">
-            <h3 className="text-3xl font-bold mb-4">Ready to Take the Next Step?</h3>
-            <p className="text-white/90 text-lg mb-8 leading-relaxed">
-              Complete technical assessments and schedule interviews to land your dream job. 
-              Our AI will help you stand out from the competition.
-            </p>
-            <div className="flex justify-center space-x-6">
-              <Button
-                variant="secondary"
-                size="xl"
-                onClick={() => window.location.href = '/upload'}
-                className="bg-white text-brand-600 hover:bg-slate-100"
-              >
-                Update Resume
-              </Button>
-              <Button
-                variant="outline"
-                size="xl"
-                className="border-white text-white hover:bg-white hover:text-brand-600"
-                onClick={() => window.location.href = '/candidate-dashboard'}
-              >
-                View Applications
-              </Button>
-            </div>
-          </div>
-        </Card>
-      )}
     </div>
   );
 }

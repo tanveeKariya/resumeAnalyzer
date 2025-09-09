@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Brain, Mail, Lock, User, AlertCircle, Sparkles, ArrowRight, Shield } from 'lucide-react';
+import { Brain, Mail, Lock, User, AlertCircle, Shield, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -31,33 +31,11 @@ export default function LoginPage() {
     }
   };
 
-  const handleDemoLogin = async (demoRole: 'hr' | 'candidate') => {
-    setLoading(true);
-    setError('');
-    
-    try {
-      const demoCredentials = {
-        hr: { email: 'hr@demo.com', password: 'demo123' },
-        candidate: { email: 'candidate@demo.com', password: 'demo123' }
-      };
-      
-      const { email: demoEmail, password: demoPassword } = demoCredentials[demoRole];
-      console.log('Attempting demo login for:', demoRole);
-      await login(demoEmail, demoPassword, demoRole);
-      navigate('/dashboard');
-    } catch (error: any) {
-      console.error('Demo login error:', error);
-      setError(error.message || 'Demo login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-brand-50 to-violet-100 flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center px-4 relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-200/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float"></div>
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-200/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
       </div>
 
@@ -65,43 +43,16 @@ export default function LoginPage() {
         {/* Header */}
         <div className="text-center mb-10">
           <Link to="/" className="inline-flex items-center space-x-3 mb-8 group">
-            <div className="w-14 h-14 gradient-brand rounded-2xl flex items-center justify-center shadow-large group-hover:shadow-glow transition-all duration-300">
+            <div className="w-14 h-14 bg-gradient-to-r from-blue-600 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
               <Brain className="h-8 w-8 text-white" />
             </div>
             <div className="text-left">
-              <span className="text-3xl font-bold gradient-text">CareerAI</span>
+              <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">CareerAI</span>
               <p className="text-sm text-slate-500 font-medium">Intelligent Hiring Platform</p>
             </div>
           </Link>
           <h2 className="text-5xl font-bold text-slate-900 mb-4">Welcome Back</h2>
           <p className="text-slate-600 text-lg font-medium">Sign in to continue your intelligent hiring journey</p>
-        </div>
-
-        {/* Demo Login Cards */}
-        <div className="grid grid-cols-2 gap-4 mb-10">
-          <button
-            onClick={() => handleDemoLogin('candidate')}
-            disabled={loading}
-            className="group p-8 glass rounded-3xl border border-white/20 hover:border-brand-300 hover:bg-brand-50/50 transition-all disabled:opacity-50 shadow-medium hover:shadow-large transform hover:-translate-y-1"
-          >
-            <div className="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-medium group-hover:shadow-large group-hover:scale-110 transition-all duration-300">
-              <User className="h-8 w-8 text-white" />
-            </div>
-            <p className="font-bold text-slate-900 text-lg mb-1">Demo Candidate</p>
-            <p className="text-sm text-slate-600 font-medium">Experience as job seeker</p>
-          </button>
-          
-          <button
-            onClick={() => handleDemoLogin('hr')}
-            disabled={loading}
-            className="group p-8 glass rounded-3xl border border-white/20 hover:border-violet-300 hover:bg-violet-50/50 transition-all disabled:opacity-50 shadow-medium hover:shadow-large transform hover:-translate-y-1"
-          >
-            <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-medium group-hover:shadow-large group-hover:scale-110 transition-all duration-300">
-              <Sparkles className="h-8 w-8 text-white" />
-            </div>
-            <p className="font-bold text-slate-900 text-lg mb-1">Demo HR</p>
-            <p className="text-sm text-slate-600 font-medium">Experience as recruiter</p>
-          </button>
         </div>
 
         {/* Login Form */}
@@ -168,7 +119,7 @@ export default function LoginPage() {
           <div className="mt-8 text-center">
             <p className="text-slate-600 font-medium">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-brand-600 hover:text-brand-700 font-bold transition-colors">
+              <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-bold transition-colors">
                 Create Account
               </Link>
             </p>

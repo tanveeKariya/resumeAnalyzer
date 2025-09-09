@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, User, CheckCircle, AlertCircle, Video } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, CheckCircle, AlertCircle, Video, Building } from 'lucide-react';
 import { JobService, InterviewService, InterviewSlot } from '../services/api';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
@@ -61,7 +61,6 @@ export default function InterviewSlotModal({
       }
     } catch (error: any) {
       console.error('Failed to request slot:', error);
-      alert('Failed to request interview slot. Please try again.');
     } finally {
       setRequesting(false);
     }
@@ -105,22 +104,27 @@ export default function InterviewSlotModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Schedule Interview" size="lg">
       <div className="space-y-6">
-        <div className="glass rounded-2xl p-6 border border-brand-200/60">
-          <h4 className="font-bold text-slate-900 mb-3 flex items-center space-x-2">
-            <User className="h-5 w-5 text-brand-600" />
+        {/* Interview Details */}
+        <div className="glass rounded-2xl p-6 border border-blue-200/60 bg-blue-50/30">
+          <h4 className="font-bold text-slate-900 mb-4 flex items-center space-x-2">
+            <Building className="h-5 w-5 text-blue-600" />
             <span>Interview Details</span>
           </h4>
-          <div className="space-y-2 text-slate-700">
-            <p><span className="font-semibold">Position:</span> {jobTitle}</p>
-            <p><span className="font-semibold">Company:</span> {company}</p>
-            <p><span className="font-semibold">Duration:</span> 60 minutes</p>
-            <p><span className="font-semibold">Type:</span> Technical Interview</p>
+          <div className="grid md:grid-cols-2 gap-4 text-slate-700">
+            <div>
+              <p className="font-semibold">Position: <span className="text-blue-600">{jobTitle}</span></p>
+              <p className="font-semibold">Company: <span className="text-slate-900">{company}</span></p>
+            </div>
+            <div>
+              <p className="font-semibold">Duration: <span className="text-slate-900">60 minutes</span></p>
+              <p className="font-semibold">Type: <span className="text-slate-900">Technical Interview</span></p>
+            </div>
           </div>
         </div>
 
         {loading ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 gradient-brand rounded-3xl flex items-center justify-center mx-auto mb-4 animate-pulse-soft">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-violet-600 rounded-3xl flex items-center justify-center mx-auto mb-4 animate-pulse shadow-xl">
               <Calendar className="h-8 w-8 text-white" />
             </div>
             <p className="text-slate-600 font-medium">Loading available slots...</p>
@@ -128,7 +132,7 @@ export default function InterviewSlotModal({
         ) : (
           <div className="space-y-6">
             <h4 className="font-bold text-slate-900 text-lg flex items-center space-x-2">
-              <Calendar className="h-5 w-5 text-brand-600" />
+              <Calendar className="h-5 w-5 text-blue-600" />
               <span>Available Time Slots</span>
             </h4>
             
@@ -153,9 +157,9 @@ export default function InterviewSlotModal({
                           disabled={!slot.isAvailable}
                           className={`p-4 rounded-xl border-2 transition-all duration-200 text-center ${
                             selectedSlot === slot.id
-                              ? 'border-brand-500 bg-brand-50 text-brand-900 shadow-medium'
+                              ? 'border-blue-500 bg-blue-50 text-blue-900 shadow-lg scale-105'
                               : slot.isAvailable
-                              ? 'border-slate-200 hover:border-brand-300 hover:bg-brand-50/50 hover:shadow-soft'
+                              ? 'border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-md'
                               : 'border-slate-100 bg-slate-50 text-slate-400 cursor-not-allowed'
                           }`}
                         >
@@ -176,6 +180,7 @@ export default function InterviewSlotModal({
           </div>
         )}
 
+        {/* Selected Slot Confirmation */}
         {selectedSlot && (
           <div className="glass rounded-2xl p-6 border border-emerald-200/60 bg-emerald-50/50">
             <div className="flex items-center space-x-3 mb-4">
@@ -183,7 +188,7 @@ export default function InterviewSlotModal({
               <h4 className="font-bold text-emerald-900">Selected Time Slot</h4>
             </div>
             <div className="text-emerald-800">
-              <p className="font-semibold">
+              <p className="font-semibold text-lg">
                 {formatSlotDate(slots.find(s => s.id === selectedSlot)?.dateTime || '')} at{' '}
                 {formatSlotTime(slots.find(s => s.id === selectedSlot)?.dateTime || '')}
               </p>
@@ -194,6 +199,7 @@ export default function InterviewSlotModal({
           </div>
         )}
 
+        {/* Action Buttons */}
         <div className="flex space-x-4 pt-4 border-t border-slate-200/60">
           <Button
             onClick={requestSlot}
@@ -201,10 +207,11 @@ export default function InterviewSlotModal({
             loading={requesting}
             className="flex-1"
             icon={Video}
+            size="lg"
           >
             {requesting ? 'Requesting Slot...' : 'Request Interview Slot'}
           </Button>
-          <Button variant="outline" onClick={onClose} className="flex-1">
+          <Button variant="outline" onClick={onClose} className="flex-1" size="lg">
             Cancel
           </Button>
         </div>

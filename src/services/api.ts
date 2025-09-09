@@ -144,28 +144,9 @@ export interface Job {
     appliedAt: string;
     status: string;
     candidateBrief?: string;
-    testScore?: number;
-    testPassed?: boolean;
   }>;
   createdAt: string;
   availableSlots?: string[];
-}
-
-export interface TestQuestion {
-  id: number;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  difficulty: string;
-  category: string;
-}
-
-export interface TestResult {
-  score: number;
-  passed: boolean;
-  correctAnswers: number;
-  totalQuestions: number;
-  passingScore: number;
 }
 
 export interface InterviewSlot {
@@ -266,9 +247,7 @@ export class AuthService {
 
     const user: User = {
       _id: Date.now().toString(),
-      name: email === 'hr@demo.com' ? 'Sarah Johnson' : 
-            email === 'candidate@demo.com' ? 'Alex Chen' : 
-            email.split('@')[0].replace(/[^a-zA-Z]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      name: email.split('@')[0].replace(/[^a-zA-Z]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
       email,
       role,
       createdAt: new Date().toISOString(),
@@ -778,163 +757,6 @@ Return a JSON object with this EXACT structure:
 }
 
 // =====================
-// Test Service
-// =====================
-export class TestService {
-  static async generateQuestions(jobTitle: string): Promise<TestQuestion[]> {
-    const prompt = `Generate 10 technical assessment questions for a ${jobTitle} position. 
-    
-    IMPORTANT: Return ONLY a JSON array with no additional text.
-    
-    Create questions that are:
-    - 3 easy level questions (basic concepts)
-    - 5 moderate level questions (practical application)
-    - 2 advanced level questions (problem-solving)
-    
-    Each question should have 4 multiple choice options with only one correct answer.
-    
-    Return a JSON array with this exact structure:
-    [
-      {
-        "id": 1,
-        "question": "Question text here?",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
-        "correctAnswer": 0,
-        "difficulty": "easy",
-        "category": "technical"
-      }
-    ]
-    
-    Focus on relevant technical skills for ${jobTitle}.`;
-
-    try {
-      const response = await fetch(DEEPSEEK_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.7,
-          max_tokens: 3000,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`DeepSeek API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const content = data.choices[0]?.message?.content;
-      const cleanedContent = this.cleanJsonArrayResponse(content);
-      return JSON.parse(cleanedContent);
-    } catch (error) {
-      console.error('Question generation failed:', error);
-      return this.getFallbackQuestions(jobTitle);
-    }
-  }
-
-  static cleanJsonArrayResponse(response: string): string {
-    const jsonStart = response.indexOf('[');
-    const jsonEnd = response.lastIndexOf(']');
-    
-    if (jsonStart !== -1 && jsonEnd !== -1) {
-      return response.substring(jsonStart, jsonEnd + 1);
-    }
-    
-    return response;
-  }
-
-  static getFallbackQuestions(jobTitle: string): TestQuestion[] {
-    const baseQuestions = [
-      {
-        id: 1,
-        question: "What is the primary purpose of React hooks?",
-        options: [
-          "To manage state in functional components",
-          "To create class components",
-          "To handle routing",
-          "To manage CSS styles"
-        ],
-        correctAnswer: 0,
-        difficulty: "easy",
-        category: "react"
-      },
-      {
-        id: 2,
-        question: "Which HTTP method is typically used to create a new resource?",
-        options: ["GET", "POST", "PUT", "DELETE"],
-        correctAnswer: 1,
-        difficulty: "easy",
-        category: "web"
-      },
-      {
-        id: 3,
-        question: "What does API stand for?",
-        options: [
-          "Application Programming Interface",
-          "Advanced Programming Integration",
-          "Automated Program Interaction",
-          "Application Process Integration"
-        ],
-        correctAnswer: 0,
-        difficulty: "easy",
-        category: "concepts"
-      },
-      {
-        id: 4,
-        question: "In JavaScript, what does the 'this' keyword refer to?",
-        options: [
-          "The current function",
-          "The global object",
-          "The object that owns the method",
-          "The parent element"
-        ],
-        correctAnswer: 2,
-        difficulty: "moderate",
-        category: "javascript"
-      },
-      {
-        id: 5,
-        question: "What is the purpose of version control systems like Git?",
-        options: [
-          "To compile code",
-          "To track changes in source code",
-          "To run tests",
-          "To deploy applications"
-        ],
-        correctAnswer: 1,
-        difficulty: "easy",
-        category: "tools"
-      }
-    ];
-
-    return baseQuestions.slice(0, 10);
-  }
-
-  static async submitTest(questions: TestQuestion[], answers: number[]): Promise<TestResult> {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    const correctAnswers = answers.reduce((count, answer, index) => {
-      return answer === questions[index]?.correctAnswer ? count + 1 : count;
-    }, 0);
-    
-    const score = Math.round((correctAnswers / questions.length) * 100);
-    const passed = score >= 70;
-    
-    return {
-      score,
-      passed,
-      correctAnswers,
-      totalQuestions: questions.length,
-      passingScore: 70
-    };
-  }
-}
-
-// =====================
 // Resume Analysis Service
 // =====================
 export class ResumeAnalysisService {
@@ -1205,22 +1027,16 @@ export class JobService {
     return slots;
   }
 
-  static async applyToJob(jobId: string, resumeId: string, testResult: TestResult): Promise<{ success: boolean; data: any }> {
+  static async applyToJob(jobId: string, resumeId: string): Promise<{ success: boolean; data: any }> {
     try {
-      const response = await api.post(`/jobs/${jobId}/apply`, { 
-        resumeId, 
-        testScore: testResult.score,
-        testPassed: testResult.passed 
-      });
+      const response = await api.post(`/jobs/${jobId}/apply`, { resumeId });
       return response.data;
     } catch (error) {
       return {
         success: true,
         data: {
           matchScore: Math.floor(Math.random() * 20) + 80,
-          message: 'Application submitted successfully',
-          testScore: testResult.score,
-          testPassed: testResult.passed
+          message: 'Application submitted successfully'
         }
       };
     }
@@ -1366,10 +1182,12 @@ export class StorageService {
     const resumes = JSON.parse(localStorage.getItem('career_ai_resumes') || '[]');
     const interviews = JSON.parse(localStorage.getItem('career_ai_interviews') || '[]');
     const jobs = JSON.parse(localStorage.getItem('career_ai_jobs') || '[]');
+    const applications = JSON.parse(localStorage.getItem('career_ai_applications') || '[]');
 
     return {
       totalResumes: resumes.length,
-      totalMatches: jobs.length * 2,
+      totalJobs: jobs.length,
+      totalApplications: applications.length,
       totalInterviews: interviews.length,
       completedInterviews: interviews.filter((i: any) => i.status === 'completed').length,
       pendingInterviews: interviews.filter((i: any) => i.status === 'pending').length,
@@ -1379,17 +1197,31 @@ export class StorageService {
     };
   }
 
-  static saveTestResult(jobId: string, testResult: TestResult): void {
-    const stored = localStorage.getItem('career_ai_test_results') || '{}';
-    const results = JSON.parse(stored);
-    results[jobId] = testResult;
-    localStorage.setItem('career_ai_test_results', JSON.stringify(results));
+  static saveApplication(jobId: string, resumeId: string, matchScore: number): void {
+    const stored = localStorage.getItem('career_ai_applications') || '[]';
+    const applications = JSON.parse(stored);
+    
+    const application = {
+      id: Date.now().toString(),
+      jobId,
+      resumeId,
+      matchScore,
+      appliedAt: new Date().toISOString(),
+      status: 'applied'
+    };
+    
+    applications.push(application);
+    localStorage.setItem('career_ai_applications', JSON.stringify(applications));
   }
 
-  static getTestResult(jobId: string): TestResult | null {
-    const stored = localStorage.getItem('career_ai_test_results') || '{}';
-    const results = JSON.parse(stored);
-    return results[jobId] || null;
+  static getApplications(): any[] {
+    const stored = localStorage.getItem('career_ai_applications') || '[]';
+    return JSON.parse(stored);
+  }
+
+  static hasAppliedToJob(jobId: string): boolean {
+    const applications = this.getApplications();
+    return applications.some((app: any) => app.jobId === jobId);
   }
 }
 

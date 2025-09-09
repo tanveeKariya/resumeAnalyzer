@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Brain, Mail, Lock, User, AlertCircle, UserPlus, Sparkles, Shield, CheckCircle } from 'lucide-react';
+import { Brain, Mail, Lock, User, AlertCircle, UserPlus, Shield, CheckCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -58,10 +58,10 @@ export default function SignupPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-brand-50 to-violet-100 flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center px-4 relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-200/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float"></div>
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-200/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
       </div>
 
@@ -70,11 +70,11 @@ export default function SignupPage() {
           {/* Left Side - Benefits */}
           <div className="space-y-8">
             <Link to="/" className="inline-flex items-center space-x-3 group">
-              <div className="w-14 h-14 gradient-brand rounded-2xl flex items-center justify-center shadow-large group-hover:shadow-glow transition-all duration-300">
+              <div className="w-14 h-14 bg-gradient-to-r from-blue-600 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
                 <Brain className="h-8 w-8 text-white" />
               </div>
               <div className="text-left">
-                <span className="text-3xl font-bold gradient-text">CareerAI</span>
+                <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">CareerAI</span>
                 <p className="text-sm text-slate-500 font-medium">Intelligent Hiring Platform</p>
               </div>
             </Link>
@@ -100,9 +100,9 @@ export default function SignupPage() {
               ))}
             </div>
 
-            <div className="glass rounded-3xl p-8 border border-white/20 shadow-medium">
+            <div className="glass rounded-3xl p-8 border border-white/20 shadow-lg">
               <div className="flex items-center space-x-4 mb-4">
-                <Shield className="h-8 w-8 text-brand-600" />
+                <Shield className="h-8 w-8 text-blue-600" />
                 <h3 className="font-bold text-slate-900 text-lg">Enterprise Security</h3>
               </div>
               <p className="text-slate-600 font-medium">
@@ -203,7 +203,7 @@ export default function SignupPage() {
               <div className="mt-8 text-center">
                 <p className="text-slate-600 font-medium">
                   Already have an account?{' '}
-                  <Link to="/login" className="text-brand-600 hover:text-brand-700 font-bold transition-colors">
+                  <Link to="/login" className="text-blue-600 hover:text-blue-700 font-bold transition-colors">
                     Sign In
                   </Link>
                 </p>
