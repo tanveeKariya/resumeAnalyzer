@@ -400,15 +400,15 @@ export class ResumeExtractor {
 
   static getSampleResumeText(): string {
     return `
-John Doe
-Senior Software Engineer
-john.doe@email.com
-+1 (555) 123-4567
-LinkedIn: linkedin.com/in/johndoe
+Alex Johnson
+Software Developer
+alex.johnson@email.com
++1 (555) 987-6543
+LinkedIn: linkedin.com/in/alexjohnson
 San Francisco, CA
 
 PROFESSIONAL SUMMARY
-Experienced Senior Software Engineer with 5+ years of expertise in full-stack development, 
+Experienced Software Developer with 3+ years of expertise in full-stack development, 
 specializing in React, Node.js, and cloud technologies. Proven track record of leading 
 development teams and delivering scalable web applications.
 
@@ -422,21 +422,21 @@ Tools: Git, GitHub, Jira, Postman, VS Code, IntelliJ IDEA
 
 PROFESSIONAL EXPERIENCE
 
-Senior Software Engineer | TechCorp Inc. | San Francisco, CA | 2021 - Present
+Software Developer | TechCorp Inc. | San Francisco, CA | 2021 - Present
 • Led development of microservices architecture serving 1M+ users using React and Node.js
 • Implemented CI/CD pipelines reducing deployment time by 60% using Docker and Kubernetes
 • Mentored 5 junior developers and conducted code reviews ensuring high code quality
 • Optimized database queries improving application performance by 40%
 • Technologies: React, Node.js, MongoDB, AWS, Docker, Kubernetes
 
-Software Developer | StartupXYZ | Remote | 2019 - 2021
+Junior Developer | StartupXYZ | Remote | 2019 - 2021
 • Built full-stack web applications using MERN stack for e-commerce platform
 • Integrated payment gateways (Stripe, PayPal) and third-party APIs
 • Developed responsive UI components used across 10+ different projects
 • Implemented automated testing reducing bugs in production by 50%
 • Technologies: React, Node.js, Express.js, MongoDB, Redux, Jest
 
-Junior Developer | WebSolutions Ltd. | New York, NY | 2018 - 2019
+Intern Developer | WebSolutions Ltd. | New York, NY | 2018 - 2019
 • Developed and maintained client websites using HTML, CSS, JavaScript, and PHP
 • Collaborated with design team to implement pixel-perfect UI designs
 • Fixed bugs and implemented new features based on client requirements
@@ -455,11 +455,11 @@ CERTIFICATIONS
 
 PROJECTS
 
-E-Commerce Platform | Personal Project | 2023
+Online Store Platform | Personal Project | 2023
 • Built full-featured e-commerce platform with user authentication, product catalog, and payment processing
 • Implemented real-time inventory management and order tracking
 • Technologies: React, Node.js, Express.js, MongoDB, Stripe API, Socket.io
-• GitHub: github.com/johndoe/ecommerce-platform
+• GitHub: github.com/alexjohnson/store-platform
 
 Task Management App | Team Project | 2022
 • Developed collaborative task management application with real-time updates
@@ -589,15 +589,15 @@ Return a JSON object with this EXACT structure:
       return this.validateAndEnhanceData(extractedData, resumeText);
     } catch (error) {
       console.error('Enhanced resume extraction failed:', error);
-      return this.enhancedFallbackExtraction(resumeText);
+      return this.enhancedFallbackExtraction(resumeText, true);
     }
   }
 
   static validateAndEnhanceData(extractedData: any, originalText: string): ResumeAnalysis['extractedData'] {
     return {
-      name: extractedData.name || this.extractNameFromText(originalText),
-      email: extractedData.email || this.extractEmailFromText(originalText),
-      phone: extractedData.phone || this.extractPhoneFromText(originalText),
+      name: extractedData.name || this.extractNameFromText(originalText) || 'Unknown User',
+      email: extractedData.email || this.extractEmailFromText(originalText) || 'user@example.com',
+      phone: extractedData.phone || this.extractPhoneFromText(originalText) || '+1 (555) 000-0000',
       linkedin: extractedData.linkedin || '',
       location: extractedData.location || '',
       summary: extractedData.summary || '',
@@ -662,7 +662,7 @@ Return a JSON object with this EXACT structure:
     return variations;
   }
 
-  static extractNameFromText(text: string): string {
+  static extractNameFromText(text: string): string | null {
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     
     for (let i = 0; i < Math.min(5, lines.length); i++) {
@@ -672,7 +672,7 @@ Return a JSON object with this EXACT structure:
       }
     }
     
-    return 'John Doe';
+    return null;
   }
 
   static isLikelyName(text: string): boolean {
@@ -684,13 +684,13 @@ Return a JSON object with this EXACT structure:
            !text.includes('www');
   }
 
-  static extractEmailFromText(text: string): string {
+  static extractEmailFromText(text: string): string | null {
     const emailPattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
     const matches = text.match(emailPattern);
-    return matches ? matches[0] : 'john.doe@email.com';
+    return matches ? matches[0] : null;
   }
 
-  static extractPhoneFromText(text: string): string {
+  static extractPhoneFromText(text: string): string | null {
     const phonePatterns = [
       /\+?1?[-.\s]?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/g,
       /\+?[0-9]{1,4}[-.\s]?[0-9]{3,4}[-.\s]?[0-9]{3,4}[-.\s]?[0-9]{3,4}/g
@@ -703,21 +703,29 @@ Return a JSON object with this EXACT structure:
       }
     }
     
-    return '+1 (555) 123-4567';
+    return null;
   }
 
-  static enhancedFallbackExtraction(resumeText: string): ResumeAnalysis['extractedData'] {
+  static enhancedFallbackExtraction(resumeText: string, useUserData: boolean = false): ResumeAnalysis['extractedData'] {
+    // Get current user data from localStorage
+    const currentUser = JSON.parse(localStorage.getItem('career_ai_user') || '{}');
+    
+    // Extract what we can from the resume text
+    const extractedName = this.extractNameFromText(resumeText);
+    const extractedEmail = this.extractEmailFromText(resumeText);
+    const extractedPhone = this.extractPhoneFromText(resumeText);
+    
     return {
-      name: this.extractNameFromText(resumeText),
-      email: this.extractEmailFromText(resumeText),
-      phone: this.extractPhoneFromText(resumeText),
-      linkedin: 'linkedin.com/in/johndoe',
+      name: extractedName || (useUserData ? currentUser.name : null) || 'Unknown User',
+      email: extractedEmail || (useUserData ? currentUser.email : null) || 'user@example.com',
+      phone: extractedPhone || '+1 (555) 000-0000',
+      linkedin: '',
       location: 'San Francisco, CA',
       summary: 'Experienced software engineer with strong technical background and proven track record of delivering scalable solutions.',
       skills: this.enhanceSkillsExtraction([], resumeText),
       experience: [{
         title: 'Senior Software Engineer',
-        company: 'TechCorp Inc.',
+        company: 'Technology Company',
         duration: '2021 - Present',
         location: 'San Francisco, CA',
         description: 'Led development of scalable web applications using modern technologies and best practices.',
@@ -737,7 +745,7 @@ Return a JSON object with this EXACT structure:
         description: 'Full-featured e-commerce platform with user authentication and payment processing',
         technologies: ['React', 'Node.js', 'MongoDB', 'Stripe'],
         duration: '3 months',
-        url: 'github.com/johndoe/ecommerce'
+        url: 'github.com/user/ecommerce'
       }],
       languages: ['English', 'Spanish'],
       achievements: ['Led team that won Best Innovation Award', 'Speaker at JavaScript Conference 2023']
